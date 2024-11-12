@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import contextmanager
 
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
 from ..models import get_user_id, save_prediction, get_user_predictions
@@ -6,7 +7,7 @@ import pandas as pd
 from flask_cors import CORS
 
 bp = Blueprint('main', __name__)
-CORS(bp)
+CORS(bp, supports_credentials=True, origins="http://localhost:3000")  # Enable credentials support),
 
 df = pd.read_csv('result_sarima_arima.csv',
                  names=["Model", "Country", "Age", "Sex", "Date", "Forecast", "R^2", "MSE", "RMSE", "MAPE"], header=0)
@@ -119,25 +120,55 @@ def get_form_data():
     })
 
 
+from flask import Blueprint, jsonify, session
+import sqlite3
+from contextlib import contextmanager
+
+bp = Blueprint('main', __name__)
+
+# Контекстний менеджер для роботи з базою даних
+@contextmanager
+def get_db_connection():
+    conn = sqlite3.connect('users.db')
+    conn.row_factory = sqlite3.Row  # Дозволяє доступ до колонок за назвами
+    conn.execute("PRAGMA foreign_keys = ON")  # Включення підтримки зовнішніх ключів
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+# Ендпоінт для отримання історії користувача, якщо він автентифікований
 @bp.route('/api/user-history', methods=['GET'])
 def get_user_history():
-    if 'username' not in session:
+    # Перевірка, чи автентифікований користувач
+    if 'user_id' not in session:
         return jsonify({"error": "User not authenticated"}), 401
 
-    user_id = get_user_id(session['username'])
-    history_data = get_user_predictions(user_id)
+    user_id = session['user_id']  # Отримання ID користувача із сесії
 
-    history_list = []
-    for prediction in history_data:
-        history_list.append({
-            "country": prediction[0],
-            "age": prediction[1],
-            "sex": prediction[2],
-            "year": prediction[3],
-            "model": prediction[4],
-            "r_squared": prediction[5],
-            "rmse": prediction[6],
-            "forecast": prediction[7]
-        })
+    # Отримання історії прогнозів з бази даних
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT country, age, sex, year, model, r_squared, rmse, prediction 
+            FROM predictions 
+            WHERE user_id = ?
+        ''', (user_id,))
+        history = cursor.fetchall()  # Отримання всіх результатів як список рядків
+
+    # Форматування результатів у список словників
+    history_list = [
+        {
+            "country": row["country"],
+            "age": row["age"],
+            "sex": row["sex"],
+            "year": row["year"],
+            "model": row["model"],
+            "r_squared": row["r_squared"],
+            "rmse": row["rmse"],
+            "prediction": row["prediction"]
+        }
+        for row in history
+    ]
 
     return jsonify(history_list)
