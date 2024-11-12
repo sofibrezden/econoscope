@@ -16,113 +16,161 @@ sex_categories = ['Total', 'Male', 'Female']
 
 app = dash.Dash(__name__)
 
-app.layout = html.Div([
-
-    html.Div([
-        html.Div([
-            html.Div([
-                html.H3('Unemployment Rate', style={"margin-bottom": "0px", 'color': '627254'}),
-                html.H5('2014-2024', style={"margin-top": "0px", 'color': '#627254'}),
-
-            ]),
-        ], className="six column", id="title")
-
-    ], id="header", className="row flex-display", style={"margin-bottom": "25px"}),
-    # Additional charts for analysis
-    html.Div([
-        html.Div([
-            html.P('Select Year:', className='fix_label', style={'color': '#627254', 'margin-left': '1%'}),
-            dcc.Slider(id='select_year',
-                       min=2014,
-                       max=2024,
-                       value=2024,
-                       marks={year: {'label': str(year), 'style': {'color': '#627254', 'font-size': '20px'}} for year in
-                              range(2014, 2025, 1)},
-                       step=1),
-        ], className="create_container 12 columns"),
-    ], className="row flex-display", style={"margin-bottom": "25px"}),
-
-    # Additional map for continent selection
-    html.Div([
-        html.Div([
-            html.P('Select Continent:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
-            dcc.Dropdown(id='w_continent',
-                         multi=False,
-                         clearable=True,
-                         disabled=False,
-                         style={'display': True},
-                         value='Europe',
-                         placeholder='Select Continent',
-                         options=[{'label': c, 'value': c}
-                                  for c in continent], className='dcc_compon'),
-            html.P('Select Gender:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
-            dcc.Dropdown(id='w_gender',
-                         multi=False,
-                         clearable=True,
-                         disabled=False,
-                         style={'display': True},
-                         value='Total',
-                         placeholder='Select Gender',
-                         options=[{'label': gender, 'value': gender}
-                                  for gender in sex_categories], className='dcc_compon'),
-        ], className="create_container three columns", style={"margin-bottom": "25px"}),
-
-        html.Div([
-            dcc.Graph(id='map_continent',
-                      config={'displayModeBar': 'hover'}),
-
-        ], className="create_container twelve columns"),
-
-    ], className="row flex-display", style={"margin-top": "25px"}),
-
-    html.Div([
-        html.Div([
-            dcc.Graph(id='bar_line_chart',
-                      config={'displayModeBar': 'hover'}, style={'color': '#627254'}),
-        ], className="create_container six columns"),
-
-        html.Div([
-            dcc.Graph(id='pie_chart',
-                      config={'displayModeBar': 'hover'}),
-        ], className="create_container six columns"),
-    ], className="row flex-display"),
-
-    # Additional UI components for detailed analysis by region and country
-    html.Div([
-        html.Div([
-            html.P('Select Year:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
-            dcc.Dropdown(id='w_year',
-                         multi=False,
-                         clearable=False,
-                         disabled=False,
-                         style={'display': True},
-                         value=2025,
-                         placeholder='Select Year',
-                         options=[{'label': str(year), 'value': year}
-                                  for year in range(2025, 2028)], className='dcc_compon'),
-            html.P("Select predictions from your history (Country, Age, Sex):", className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
-            dcc.Dropdown(id='w_prediction',
-                         multi=False,
-                         clearable=True,
-                         disabled=False,
-                         style={'display': True},
-                         placeholder='Select Prediction',
-                         options=[],
-                         value=None,
-                         className='dcc_compon'),
-        ], className="create_container three columns", style={"margin-bottom": "25px"}),
-
-        html.Div([
-            dcc.Graph(id='unemployment_rate_graph',
-                      config={'displayModeBar': 'hover'}, style={'color': '#627254'}),
-        ], className="create_container nine columns"),
-
-    ], className="row flex-display", style={"margin-top": "25px"}),
-
-], id="mainContainer", style={"display": "flex", "flex-direction": "column"})
-
 import flask
 from requests import Session
+
+def check_user_registration():
+    try:
+        with Session() as session:
+            if flask.has_request_context():
+                cookie = flask.request.cookies.get('session')
+                if cookie:
+                    session.cookies.set('session', cookie)
+
+            response = session.get("http://127.0.0.1:5000/api/user-history")
+
+        if response.status_code == 200:
+            return True
+        elif response.status_code == 401:
+            # Неавторизований доступ
+            return False
+        else:
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"Error checking user registration: {e}")
+        return False
+
+def serve_layout():
+    is_registered = check_user_registration()
+    layout_children = []
+
+    # Додаткові графіки для аналізу
+    layout_children.append(
+        html.Div([
+            html.Div([
+                html.P('Select Year:', className='fix_label', style={'color': '#627254', 'margin-left': '1%'}),
+                dcc.Slider(id='select_year',
+                           min=2014,
+                           max=2024,
+                           value=2024,
+                           marks={year: {'label': str(year), 'style': {'color': '#627254', 'font-size': '20px'}} for year in
+                                  range(2014, 2025, 1)},
+                           step=1),
+            ], className="create_container 12 columns"),
+        ], className="row flex-display", style={"margin-bottom": "25px"})
+    )
+
+    # Карта для вибору континенту
+    layout_children.append(
+        html.Div([
+            html.Div([
+                html.P('Select Continent:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
+                dcc.Dropdown(id='w_continent',
+                             multi=False,
+                             clearable=True,
+                             disabled=False,
+                             style={'display': True},
+                             value='Europe',
+                             placeholder='Select Continent',
+                             options=[{'label': c, 'value': c}
+                                      for c in continent], className='dcc_compon'),
+                html.P('Select Gender:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
+                dcc.Dropdown(id='w_gender',
+                             multi=False,
+                             clearable=True,
+                             disabled=False,
+                             style={'display': True},
+                             value='Total',
+                             placeholder='Select Gender',
+                             options=[{'label': gender, 'value': gender}
+                                      for gender in sex_categories], className='dcc_compon'),
+            ], className="create_container three columns", style={"margin-bottom": "25px"}),
+            html.Div([
+                dcc.Graph(id='map_continent',
+                          config={'displayModeBar': 'hover'}),
+            ], className="create_container twelve columns"),
+        ], className="row flex-display", style={"margin-top": "25px"})
+    )
+
+    # Графіки бар-лінія та кругова діаграма
+    layout_children.append(
+        html.Div([
+            html.Div([
+                dcc.Graph(id='bar_line_chart',
+                          config={'displayModeBar': 'hover'}, style={'color': '#627254'}),
+            ], className="create_container six columns"),
+            html.Div([
+                dcc.Graph(id='pie_chart',
+                          config={'displayModeBar': 'hover'}),
+            ], className="create_container six columns"),
+        ], className="row flex-display")
+    )
+
+    # Додайте останню секцію лише якщо користувач зареєстрований
+    if is_registered:
+        layout_children.append(
+            html.Div([
+                html.Div([
+                    html.P('Select Year:', className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
+                    dcc.Dropdown(id='w_year',
+                                 multi=False,
+                                 clearable=False,
+                                 disabled=False,
+                                 style={'display': True},
+                                 value=2025,
+                                 placeholder='Select Year',
+                                 options=[{'label': str(year), 'value': year}
+                                          for year in range(2025, 2028)], className='dcc_compon'),
+                    html.P("Select predictions from your history (Country, Age, Sex):", className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
+                    dcc.Dropdown(id='w_prediction',
+                                 multi=False,
+                                 clearable=True,
+                                 disabled=False,
+                                 style={'display': True},
+                                 placeholder='Select Prediction',
+                                 options=[],
+                                 value=None,
+                                 className='dcc_compon'),
+                ], className="create_container three columns", style={"margin-bottom": "25px"}),
+                html.Div([
+                    dcc.Graph(id='unemployment_rate_graph',
+                              config={'displayModeBar': 'hover'}, style={'color': '#627254'}),
+                ], className="create_container nine columns"),
+            ], className="row flex-display", style={"margin-top": "25px"})
+        )
+
+    return html.Div(layout_children, id="mainContainer", style={"display": "flex", "flex-direction": "column"})
+
+app.layout = serve_layout
+
+def fetch_user_predictions():
+    try:
+        with Session() as session:
+            if flask.has_request_context():
+                cookie = flask.request.cookies.get('session')
+                if cookie:
+                    session.cookies.set('session', cookie)
+
+            response = session.get("http://127.0.0.1:5000/api/user-history")
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Failed to fetch user predictions. Status code: {response.status_code}")
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching user predictions: {e}")
+        return []
+
+
+
+@app.callback(Output('detailed_analysis_section', 'style'),
+              [Input('w_year', 'value')])
+def toggle_detailed_analysis_visibility(w_year):
+    ctx = dash.callback_context
+    if not ctx.triggered or not flask.has_request_context() or not flask.request.cookies.get('session'):
+        return {'display': 'none'}
+    return {'display': 'flex'}
 
 
 def fetch_user_predictions():
@@ -167,8 +215,8 @@ def update_prediction_dropdown(w_year):
 @app.callback(Output('w_prediction', 'value'),
               [Input('w_prediction', 'options')])
 def set_default_prediction(options):
-    if options and options[len(options)-1]['value'] is not None:
-        return options[len(options)-1]['value']
+    if options and options[0]['value'] is not None:
+        return options[0]['value']
     return None
 
 # Create map for continent selection
