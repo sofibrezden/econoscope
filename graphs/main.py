@@ -167,8 +167,8 @@ def update_prediction_dropdown(w_year):
 @app.callback(Output('w_prediction', 'value'),
               [Input('w_prediction', 'options')])
 def set_default_prediction(options):
-    if options and options[0]['value'] is not None:
-        return options[0]['value']
+    if options and options[len(options)-1]['value'] is not None:
+        return options[len(options)-1]['value']
     return None
 
 # Create map for continent selection
