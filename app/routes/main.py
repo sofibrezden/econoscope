@@ -7,17 +7,20 @@ from flask_cors import CORS
 
 bp = Blueprint('main', __name__)
 CORS(bp)
-# Завантаження даних
+
 df = pd.read_csv('result_sarima_arima.csv',
                  names=["Model", "Country", "Age", "Sex", "Date", "Forecast", "R^2", "MSE", "RMSE", "MAPE"], header=0)
 
+
 def get_best_model(subset):
     return subset.loc[subset['R^2'].idxmax()]
+
 
 @bp.route('/')
 def index():
     countries = df['Country'].unique()
     return render_template('index.html', countries=countries)
+
 
 @bp.route('/predict', methods=['POST'])
 def predict():
@@ -29,11 +32,9 @@ def predict():
         selected_sex = data.get('sex')
         selected_year = data.get('year')
 
-        # Додаткові перевірки
         if not selected_country or not selected_age or not selected_sex or not selected_year:
             return jsonify({"error": "Missing required fields"}), 400
 
-        # Фільтрація даних
         filtered_df = df[(df['Country'] == selected_country) &
                          (df['Age'] == selected_age) &
                          (df['Sex'] == selected_sex) &
@@ -61,7 +62,6 @@ def predict():
         return jsonify({"error": "Invalid input format, JSON expected"}), 400
 
 
-
 @bp.route('/history')
 def history():
     if 'username' not in session:
@@ -84,3 +84,25 @@ def get_form_data():
     })
 
 
+@bp.route('/api/user-history', methods=['GET'])
+def get_user_history():
+    if 'username' not in session:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    user_id = get_user_id(session['username'])
+    history_data = get_user_predictions(user_id)
+
+    history_list = []
+    for prediction in history_data:
+        history_list.append({
+            "country": prediction[0],
+            "age": prediction[1],
+            "sex": prediction[2],
+            "year": prediction[3],
+            "model": prediction[4],
+            "r_squared": prediction[5],
+            "rmse": prediction[6],
+            "forecast": prediction[7]
+        })
+
+    return jsonify(history_list)
