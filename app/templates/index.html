@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Page</title>
+</head>
+<body>
+    <h1>Welcome to the Prediction App</h1>
+    <div>
+        {% if 'username' in session %}
+            <p>Welcome, {{ session['username'] }}!</p>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <a href="{{ url_for('main.history') }}">My History</a>
+            <a href="{{ url_for('main.predict') }}">Predict</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.register') }}">Register</a>
+            <a href="{{ url_for('main.predict') }}">Predict</a>
+        {% endif %}
+    </div>
+</body>
+</html>

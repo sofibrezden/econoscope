@@ -1,0 +1,63 @@
+.sectionContainer {
+    max-width: 1360px;
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.sectionTitle {
+  width: 635px;
+  color: #627254;
+  font-size: 64px;
+  font-weight: 500;
+  margin-top: 165px;
+}
+
+.sectionSubTitle {
+  width: 635px;
+  color: #627254;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 36px;
+  margin-top: 24px;
+}
+
+.buttonsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 47px;
+  margin-top: 24px;
+}
+
+.getStarted {
+  width: 155px;
+  height: 40px;
+  background-color: #627254;
+  color: #fcfcfc;
+  padding: 8px 37px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0px 3px 16px 2px #90A4AE1F, 0px 9px 12px 1px #90A4AE24, 0px 5px 6px -3px #90A4AE33;
+}
+
+.learnMore {
+  width: 155px;
+  height: 40px;
+  background-color: #fcfcfc;
+  color: #627254;
+  padding: 8px 37px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0px 3px 16px 2px #90A4AE1F, 0px 9px 12px 1px #90A4AE24, 0px 5px 6px -3px #90A4AE33;
+}
+
+.heroSectionImage {
+  width: 438px;
+  height: 380px;
+  margin-top: 165px;
+}

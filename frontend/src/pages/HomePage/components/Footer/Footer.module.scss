@@ -1,0 +1,78 @@
+.footer {
+  height: 361px;
+  background-color: #627254;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 110px;
+  padding-top: 100px;
+}
+
+.getInTouch {
+  color: #FCFCFC;
+  font-size: 48px;
+  font-weight: 500;
+}
+
+p {
+  color: #FCFCFC;
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0px 0px 0px 40px;
+}
+
+.followUs {
+  font-size: 36px;
+  font-weight: 500;
+  color: #FCFCFC;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.iconsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  width: 290px;
+  height: 46px;
+}
+
+.newsletterTitle {
+  font-size: 24px;
+  font-weight: 300;
+  width: 346px;
+  color: #FCFCFC;
+  margin: 0px 40px 15px 0px;
+}
+
+input {
+  width: 255px;
+  height: 38px;
+  &::placeholder {
+    color: #627254;
+    font-size: 20px;
+    font-weight: 300;
+  }
+  padding-left: 10px;
+  padding-top: 4px;
+}
+
+button {
+  width: 103px;
+  height: 38px;
+  background-color: #FCFCFC;
+  color: #627254;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 16px;
+  margin-left: 7px;
+}
+
