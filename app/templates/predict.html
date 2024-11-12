@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction</title>
+</head>
+<body>
+    <h1>Make a Prediction</h1>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label>Country:</label>
+        <select name="country" required>
+            {% for country in countries %}
+                <option value="{{ country }}" {% if country == request.form.country or country == selected_country %}selected{% endif %}>{{ country }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Age:</label>
+        <select name="age" required>
+            {% for age in ages %}
+                <option value="{{ age }}" {% if age == request.form.age or age == selected_age %}selected{% endif %}>{{ age }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Sex:</label>
+        <select name="sex" required>
+            {% for s in sexes %}
+                <option value="{{ s }}" {% if s == request.form.sex or s == selected_sex %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Year:</label>
+        <input type="number" name="year" value="{{ request.form.year or selected_year }}" required><br>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if prediction is not none %}
+        <h2>Prediction Result</h2>
+        <p><strong>Model:</strong> {{ model }}</p>
+        <p><strong>R-Squared:</strong> {{ r_squared }}</p>
+        <p><strong>RMSE:</strong> {{ rmse }}</p>
+        <p><strong>Forecasted Value:</strong> {{ prediction }}</p>
+    {% endif %}
+</body>
+</html>

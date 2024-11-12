@@ -1,0 +1,38 @@
+.sectionContainer {
+  background-color: #76885B;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+  gap: 120px;
+  margin-top: 100px;
+  height: 503px;
+  position: relative;
+}
+
+.sectionImage {
+  width: 725px;
+  height: 411px;
+  margin: 46px 0px 46px 38px;
+}
+
+.sectionTitile {
+  color: #FCFCFC;
+  font-size: 48px;
+  font-weight: 500;
+  margin: 40px 0px 43px 0px;
+}
+
+.sectionDescription {
+  color: #FCFCFC;
+  font-size: 24px;
+  font-weight: 300;
+  width: 506px;
+}
+
+.sectionDecor {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 150px;
+  height: 150px;
+}
