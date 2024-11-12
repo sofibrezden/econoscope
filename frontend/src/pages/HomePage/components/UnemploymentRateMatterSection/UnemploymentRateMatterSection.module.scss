@@ -1,0 +1,35 @@
+.sectionTitle {
+  color: #627254;
+  font-size: 48px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 100px;
+}
+
+.cardContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: auto;
+  margin-top: 50px;
+  max-width: 1360px;
+}
+
+.wrapper {
+  width: 310px;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: #627254;
+  padding-top: 12px;
+}
+
+.cardDescription {
+  width: 310px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #627254;
+  padding-top: 4px;
+}
