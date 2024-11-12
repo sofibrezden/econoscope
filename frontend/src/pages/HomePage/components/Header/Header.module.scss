@@ -1,0 +1,65 @@
+.headerContainer {
+  box-shadow: 0px 3px 16px 2px #90A4AE1F, 0px 9px 12px 1px #90A4AE24, 0px 5px 6px -3px #90A4AE33;
+  height: 80px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-right: 40px;
+}
+
+.logo {
+  width: 35px;
+  height: 35px;
+  margin: 0px 0px 0px 75px;
+}
+
+.title {
+  width: 94px;
+  height: 24px;
+}
+
+.logoContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  height: 35px;
+  align-items: center;
+}
+
+.buttonsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  margin-left: auto;
+  align-items: center;
+  a {
+    font-size: 14px;
+    font-weight: 500;
+    color: #627254;
+    text-decoration: none;
+    margin-right: 32px;
+  }
+}
+
+.signUpButton {
+  width: 115px;
+  height: 32px;
+  background-color: #627254;
+  color: #FCFCFC;
+  padding: 4px 31px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.signInButton {
+  width: 115px;
+  height: 32px;
+  background-color: #FCFCFC;
+  color: #627254;
+  border: 2px solid #627254;
+  border-radius: 4px;
+  padding: 4px 31px;
+  font-size: 14px;
+  font-weight: 500;
+}

@@ -1,0 +1,29 @@
+.sectionContainer {
+  max-width: 1360px;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 140px;
+}
+
+.sectionTitle {
+width: 536px;
+color: #627254;
+font-size: 48px;
+font-weight: 500;
+}
+
+.sectionSubTitle {
+width: 536px;
+color: #627254;
+font-size: 24px;
+font-weight: 300;
+line-height: 36px;
+margin-top: 24px;
+}
+
+.dollarsImage {
+width: 726px;
+height: 445px;
+}
