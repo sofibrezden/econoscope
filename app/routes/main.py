@@ -62,6 +62,41 @@ def predict():
         return jsonify({"error": "Invalid input format, JSON expected"}), 400
 
 
+@bp.route('/prediction', methods=['GET', 'POST'])
+def prediction():
+    countries = df['Country'].unique()
+    ages = df['Age'].unique()
+    sexes = df['Sex'].unique()
+
+    if request.method == 'POST':
+        selected_country = request.form['country']
+        selected_age = request.form['age']
+        selected_sex = request.form['sex']
+        selected_year = int(request.form['year'])
+        filtered_df = df[(df['Country'] == selected_country) &
+                         (df['Age'] == selected_age) &
+                         (df['Sex'] == selected_sex) &
+                         (df['Date'].str.startswith(str(selected_year)))]
+
+        if filtered_df.empty:
+            return render_template('predict.html', error='No data available', countries=countries, ages=ages,
+                                   sexes=sexes)
+
+        best_model_entry = get_best_model(filtered_df)
+        avg_forecast = filtered_df['Forecast'].mean()
+
+        if 'username' in session:
+            user_id = get_user_id(session['username'])
+            save_prediction(user_id, selected_country, selected_age, selected_sex, selected_year,
+                            best_model_entry['Model'], best_model_entry['R^2'], best_model_entry['RMSE'], avg_forecast)
+
+        return render_template('predict.html', model=best_model_entry['Model'],
+                               r_squared=best_model_entry['R^2'], rmse=best_model_entry['RMSE'],
+                               prediction=avg_forecast, countries=countries, ages=ages, sexes=sexes)
+
+    return render_template('predict.html', countries=countries, ages=ages, sexes=sexes)
+
+
 @bp.route('/history')
 def history():
     if 'username' not in session:
