@@ -11,6 +11,7 @@ function Header() {
       </div>
       <div className={styles.buttonsContainer}>
         <a href="/predict">Predict</a>
+        <a href="http://127.0.0.1:8050/">Visualisation</a>
         <button className={styles.signInButton}>Sign in</button>
         <button className={styles.signUpButton}>Sign up</button>
       </div>
