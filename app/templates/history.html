@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction History</title>
+</head>
+<body>
+    <h1>My Prediction History</h1>
+
+    {% if history %}
+        <table>
+            <tr>
+                <th>Country</th>
+                <th>Age</th>
+                <th>Sex</th>
+                <th>Year</th>
+                <th>Model</th>
+                <th>R-Squared</th>
+                <th>RMSE</th>
+                <th>Prediction</th>
+            </tr>
+            {% for record in history %}
+                <tr>
+                    <td>{{ record[0] }}</td>
+                    <td>{{ record[1] }}</td>
+                    <td>{{ record[2] }}</td>
+                    <td>{{ record[3] }}</td>
+                    <td>{{ record[4] }}</td>
+                    <td>{{ record[5] }}</td>
+                    <td>{{ record[6] }}</td>
+                    <td>{{ record[7] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No predictions made yet.</p>
+    {% endif %}
+
+    <a href="{{ url_for('main.index') }}">Back to Home</a>
+</body>
+</html>

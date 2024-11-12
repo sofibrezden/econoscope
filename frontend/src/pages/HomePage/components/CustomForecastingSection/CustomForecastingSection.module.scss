@@ -1,0 +1,30 @@
+.sectionContainer {
+  max-width: 1360px;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 100px;
+  height: 503px;
+}
+
+.sectionTitle {
+width: 500px;
+color: #627254;
+font-size: 48px;
+font-weight: 500;
+}
+
+.sectionDescription {
+width: 570px;
+color: #627254;
+font-size: 24px;
+font-weight: 300;
+line-height: 36px;
+margin-top: 24px;
+}
+
+.sectionImage {
+width: 643px;
+height: 411px;
+}
