@@ -11,7 +11,7 @@
             <p>Welcome, {{ session['username'] }}!</p>
             <a href="{{ url_for('auth.logout') }}">Logout</a>
             <a href="{{ url_for('main.history') }}">My History</a>
-            <a href="{{ url_for('main.predict') }}">Predict</a>
+            <a href="{{ url_for('main.prediction') }}">Predict</a>
         {% else %}
             <a href="{{ url_for('auth.login') }}">Login</a>
             <a href="{{ url_for('auth.register') }}">Register</a>
