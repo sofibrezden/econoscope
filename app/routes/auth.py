@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 
-from .main import get_db_connection
+from .history import get_db_connection
 from ..models import save_user, check_user_credentials
 from flask_cors import CORS
 
