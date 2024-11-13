@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import contextmanager
 
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
 from ..models import get_user_id, save_prediction, get_user_predictions
@@ -6,7 +7,7 @@ import pandas as pd
 from flask_cors import CORS
 
 bp = Blueprint('main', __name__)
-CORS(bp)
+CORS(bp, supports_credentials=True, origins="http://localhost:3000")  # Enable credentials support),
 
 df = pd.read_csv('result_sarima_arima.csv',
                  names=["Model", "Country", "Age", "Sex", "Date", "Forecast", "R^2", "MSE", "RMSE", "MAPE"], header=0)
@@ -106,7 +107,7 @@ def history():
     return render_template('history.html', history=history_data)
 
 
-@bp.route('/api/form-data', methods=['GET'])
+@bp.route('/form-data', methods=['GET'])
 def get_form_data():
     countries = df['Country'].unique().tolist()
     ages = df['Age'].unique().tolist()
@@ -118,26 +119,3 @@ def get_form_data():
         "sexes": sexes
     })
 
-
-@bp.route('/api/user-history', methods=['GET'])
-def get_user_history():
-    if 'username' not in session:
-        return jsonify({"error": "User not authenticated"}), 401
-
-    user_id = get_user_id(session['username'])
-    history_data = get_user_predictions(user_id)
-
-    history_list = []
-    for prediction in history_data:
-        history_list.append({
-            "country": prediction[0],
-            "age": prediction[1],
-            "sex": prediction[2],
-            "year": prediction[3],
-            "model": prediction[4],
-            "r_squared": prediction[5],
-            "rmse": prediction[6],
-            "forecast": prediction[7]
-        })
-
-    return jsonify(history_list)
