@@ -17,7 +17,7 @@ const UnemploymentRatePredictor = () => {
 
     useEffect(() => {
         // Отримати дані для форми з бекенду
-        axios.get("http://localhost:5000/api/form-data")
+        axios.get("http://localhost:5000/form-data")
             .then((response) => {
                 console.log("Fetched form data:", response.data); // Вивід у консоль для перевірки отриманих даних
                 setCountries(response.data.countries);
