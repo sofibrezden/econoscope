@@ -1,12 +1,21 @@
+import sqlite3
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
 import requests
+import jwt
+from urllib.parse import urlparse, parse_qs
+import flask
+from flask import Blueprint, jsonify, request
+from contextlib import contextmanager
+from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
+# Load unemployment data
 unemployment_data = pd.read_csv('df_long_with_coordinates.csv')
 
+# Extract locations and prepare data
 location1 = unemployment_data[['Country', 'latitude', 'longitude']]
 list_locations = location1.set_index('Country')[['latitude', 'longitude']].T.to_dict('dict')
 
@@ -14,34 +23,106 @@ region = unemployment_data['Continent'].unique()
 continent = unemployment_data['Continent'].unique()
 sex_categories = ['Total', 'Male', 'Female']
 
-app = dash.Dash(__name__)
+# Initialize Dash app
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
+server = app.server
 
-import flask
-from requests import Session
+# Secret key for JWT decoding
+SECRET_KEY = "your_secret_key"
 
+
+# Function to check user registration status
 def check_user_registration():
+    # Get the current URL or Referer header
+    if flask.has_request_context():
+        # First, check the request URL
+        parsed_url = urlparse(flask.request.url)
+        query_params = parse_qs(parsed_url.query)
+
+        # If token is not in URL, check the Referer header
+        if 'token' not in query_params and 'Referer' in flask.request.headers:
+            referer_url = flask.request.headers.get('Referer')
+            parsed_url = urlparse(referer_url)
+            query_params = parse_qs(parsed_url.query)
+
+        # Check if JWT token is in parameters
+        if 'token' in query_params:
+            token = query_params['token'][0]
+            try:
+                # Decode JWT token to verify
+                decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+                # Check if user is registered (conditionally check token payload)
+                if 'user_id' in decoded_token:
+                    return True, decoded_token['user_id']
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+                return False, None
+    return False, None
+
+
+# Database connection context manager
+@contextmanager
+def get_db_connection():
+    conn = sqlite3.connect('../users.db')
+    conn.row_factory = sqlite3.Row  # Allows access to columns by name
+    conn.execute("PRAGMA foreign_keys = ON")  # Enable foreign key support
     try:
-        with Session() as session:
-            if flask.has_request_context():
-                cookie = flask.request.cookies.get('session')
-                if cookie:
-                    session.cookies.set('session', cookie)
+        print("connected")
+        yield conn
+    finally:
+        conn.close()
 
-            response = session.get("http://127.0.0.1:5000/api/user-history")
 
-        if response.status_code == 200:
-            return True
-        elif response.status_code == 401:
-            # Неавторизований доступ
-            return False
-        else:
-            return False
-    except requests.exceptions.RequestException as e:
-        print(f"Error checking user registration: {e}")
-        return False
+# Function to get user prediction history
+def get_user_history():
+    is_authenticated, user_id = check_user_registration()
+    if not is_authenticated:
+        print("User not authenticated or token invalid.")
+        return []
+
+    # Fetch prediction history from the database
+    with get_db_connection() as conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT country, age, sex, year, model, r_squared, rmse, prediction 
+                FROM predictions 
+                WHERE user_id = ?
+            ''', (user_id,))
+            history = cursor.fetchall()  # Get all results as a list of rows
+            print(f"Fetched {len(history)} predictions for user ID {user_id}.")
+        except sqlite3.Error as e:
+            print(f"Error fetching predictions: {e}")
+            return []
+
+    # Convert history rows to a list of dictionaries
+    history_list = [
+        {
+            "country": row["country"],
+            "age": row["age"],
+            "sex": row["sex"],
+            "year": row["year"],
+            "model": row["model"],
+            "r_squared": row["r_squared"],
+            "rmse": row["rmse"],
+            "prediction": row["prediction"]
+        }
+        for row in history
+    ]
+
+    return history_list
+
+
+# Example route to get user history
+@server.route('/user/history', methods=['GET'])
+def user_history():
+    history = get_user_history()
+    if not history:
+        return jsonify({"error": "User not authenticated"}), 401
+    return jsonify(history)
+
 
 def serve_layout():
-    is_registered = check_user_registration()
+    is_authenticated, user_id = check_user_registration()
     layout_children = []
 
     # Додаткові графіки для аналізу
@@ -53,7 +134,8 @@ def serve_layout():
                            min=2014,
                            max=2024,
                            value=2024,
-                           marks={year: {'label': str(year), 'style': {'color': '#627254', 'font-size': '20px'}} for year in
+                           marks={year: {'label': str(year), 'style': {'color': '#627254', 'font-size': '20px'}} for
+                                  year in
                                   range(2014, 2025, 1)},
                            step=1),
             ], className="create_container 12 columns"),
@@ -106,8 +188,16 @@ def serve_layout():
         ], className="row flex-display")
     )
 
+    # Add hidden components for `w_year` and `w_prediction` to avoid callback issues
+    layout_children.append(
+        html.Div([
+            dcc.Dropdown(id='w_year', multi=False, clearable=False, style={'display': 'none'}),
+            dcc.Dropdown(id='w_prediction', multi=False, clearable=False, style={'display': 'none'}),
+        ])
+    )
+
     # Додайте останню секцію лише якщо користувач зареєстрований
-    if is_registered:
+    if is_authenticated:
         layout_children.append(
             html.Div([
                 html.Div([
@@ -121,7 +211,8 @@ def serve_layout():
                                  placeholder='Select Year',
                                  options=[{'label': str(year), 'value': year}
                                           for year in range(2025, 2028)], className='dcc_compon'),
-                    html.P("Select predictions from your history (Country, Age, Sex):", className='fix_label', style={'color': '#627254', 'font-weight': 'bold'}),
+                    html.P("Select predictions from your history (Country, Age, Sex):", className='fix_label',
+                           style={'color': '#627254', 'font-weight': 'bold'}),
                     dcc.Dropdown(id='w_prediction',
                                  multi=False,
                                  clearable=True,
@@ -141,65 +232,15 @@ def serve_layout():
 
     return html.Div(layout_children, id="mainContainer", style={"display": "flex", "flex-direction": "column"})
 
+
 app.layout = serve_layout
-
-def fetch_user_predictions():
-    try:
-        with Session() as session:
-            if flask.has_request_context():
-                cookie = flask.request.cookies.get('session')
-                if cookie:
-                    session.cookies.set('session', cookie)
-
-            response = session.get("http://127.0.0.1:5000/api/user-history")
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Failed to fetch user predictions. Status code: {response.status_code}")
-            return []
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching user predictions: {e}")
-        return []
-
-
-
-@app.callback(Output('detailed_analysis_section', 'style'),
-              [Input('w_year', 'value')])
-def toggle_detailed_analysis_visibility(w_year):
-    ctx = dash.callback_context
-    if not ctx.triggered or not flask.has_request_context() or not flask.request.cookies.get('session'):
-        return {'display': 'none'}
-    return {'display': 'flex'}
-
-
-def fetch_user_predictions():
-    try:
-        # Створення сесії для передачі cookie
-        with Session() as session:
-            # Передача сесійного cookie з Flask додатка
-            if flask.has_request_context():
-                cookie = flask.request.cookies.get('session')
-                if cookie:
-                    session.cookies.set('session', cookie)
-
-            response = session.get("http://127.0.0.1:5000/api/user-history")
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Failed to fetch user predictions. Status code: {response.status_code}")
-            return []
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching user predictions: {e}")
-        return []
 
 
 @app.callback(Output('w_prediction', 'options'),
               [Input('w_year', 'value')])
 def update_prediction_dropdown(w_year):
-    user_predictions = fetch_user_predictions()
-    # Фільтруємо країни, вік і стать, які були передбачені в обраному році
+    user_predictions = get_user_history()
+    # Filter countries, age, and sex that were predicted in the selected year
     predictions = [
         {
             'label': f"{prediction['country']}, {prediction['age']}, {prediction['sex']}",
@@ -209,7 +250,7 @@ def update_prediction_dropdown(w_year):
     ]
     if predictions:
         return predictions
-    return [{'label': 'No predictions available', 'value': None}]
+    return [{'label': 'No predictions available', 'value': ""}]
 
 
 @app.callback(Output('w_prediction', 'value'),
@@ -218,6 +259,7 @@ def set_default_prediction(options):
     if options and options[0]['value'] is not None:
         return options[0]['value']
     return None
+
 
 # Create map for continent selection
 @app.callback(Output('map_continent', 'figure'),
@@ -300,8 +342,8 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
             go.Bar(
                 x=grouped_data['Country'],
                 y=grouped_data['UnemploymentRate'],
-                marker=dict(color='#627254'),
-                name='Unemployment Rate',
+                marker=dict(color='#626058'),
+                name='Unemployment Rate      ',
                 hoverinfo='text',
                 hovertext='<b>Country</b>: ' + grouped_data['Country'] + '<br>' +
                           '<b>Unemployment Rate</b>: ' + grouped_data['UnemploymentRate'].astype(str) + '<br>'
@@ -310,8 +352,8 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
                 x=grouped_data['Country'],
                 y=grouped_data['UnemploymentRate'],
                 mode='lines+markers',
-                line=dict(color='#627254', width=2),
-                marker=dict(size=5, color='#627254'),
+                line=dict(color='#626058', width=2),
+                marker=dict(size=5, color='#626058'),
                 name='Trend Line',
                 hoverinfo='text',
                 hovertext='<b>Country</b>: ' + grouped_data['Country'] + '<br>' +
@@ -320,12 +362,26 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
         ],
         'layout': go.Layout(
             title='Unemployment Rate by Country up to ' + str(select_year),
-            titlefont=dict(color='#627254', size=20),
-            xaxis=dict(title='<b>Country</b>', color='#DDDDDD', showline=True, linewidth=2, tickangle=-45),
-            yaxis=dict(title='<b>Unemployment Rate</b>', color='#DDDDDD', showline=True, linewidth=2),
+            titlefont=dict(color='#626058', size=20),
+            xaxis=dict(title='<b>Country</b>', color='#627254', showline=True, linewidth=2, tickangle=-45,
+                       tickfont=dict(
+                           size=10
+                       )),
+            yaxis=dict(title='<b>Unemployment Rate</b>', color='#627254', showline=True, linewidth=2),
             plot_bgcolor='#f9f9f9',
             paper_bgcolor='#f9f9f9',
-            hovermode='closest'
+            hovermode='closest',
+            autosize=True,
+            legend=dict(
+                orientation='h',
+                x=0.5,
+                xanchor='center',
+                y=1.1,
+                traceorder='normal',
+                font=dict(
+                    size=12
+                )
+            )
         )
     }
 
