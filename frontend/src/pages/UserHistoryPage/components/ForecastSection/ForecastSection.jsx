@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import WorldIcon from "../../../../assets/icons/historyIcon.png";
 import styles from "../../../UserHistoryPage/components/ForecastSection/ForecastSection.module.scss";
 
@@ -7,20 +7,30 @@ function ForecastSection() {
     const [error, setError] = useState(null);
 
     const getData = useCallback(async () => {
-            try {
-                const response = await fetch("http://127.0.0.1:5000/api/user-history", {
-                    method: "GET",
-                    credentials: "include",
-                });
-                const data = await response.json();
-                setHistory(data);
-            } catch (error) {
-                console.error("Error fetching user history:", error);
-                setError("User not authenticated or failed to fetch data.");
+        try {
+            const token = localStorage.getItem("authToken"); // Отримання токена
+            if (!token) {
+                throw new Error("No authentication token found.");
             }
-        },
-        []
-    );
+
+            const response = await fetch("http://127.0.0.1:5000/api/user-history", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`, // Додавання токена у заголовок
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch user history.");
+            }
+
+            const data = await response.json();
+            setHistory(data);
+        } catch (error) {
+            console.error("Error fetching user history:", error);
+            setError("User not authenticated or failed to fetch data.");
+        }
+    }, []);
 
     useEffect(() => {
         getData();
@@ -34,7 +44,7 @@ function ForecastSection() {
                     {history.reverse().map((item, index) => (
                         <li key={index} className={styles.forecastItem}>
                             <div className={styles.forecastIcon}>
-                                <img src={WorldIcon} alt="World Icon"/>
+                                <img src={WorldIcon} alt="World Icon" />
                             </div>
                             <div className={styles.forecastDetails}>
                                 <h3 className={styles.countryName}>{item.country}</h3>
@@ -48,9 +58,9 @@ function ForecastSection() {
             ) : (
                 !error && <p className={styles.noHistoryMessage}>No history available</p>
             )}
+            {error && <p className={styles.errorMessage}>{error}</p>}
         </div>
     );
-
 }
 
-export default ForecastSection
+export default ForecastSection;

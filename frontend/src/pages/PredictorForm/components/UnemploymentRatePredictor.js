@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./UnemploymentRatePredictor.scss";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const UnemploymentRatePredictor = () => {
     const [age, setAge] = useState("");
@@ -16,7 +16,7 @@ const UnemploymentRatePredictor = () => {
     const [prediction, setPrediction] = useState(null);
 
     useEffect(() => {
-        // Отримати дані для форми з бекенду
+        console.log("Fetching form data from backend..."); // Лог для перевірки початку запиту
         axios.get("http://localhost:5000/form-data")
             .then((response) => {
                 console.log("Fetched form data:", response.data); // Вивід у консоль для перевірки отриманих даних
@@ -29,23 +29,55 @@ const UnemploymentRatePredictor = () => {
             });
     }, []);
 
+    const handlePreparePrediction = () => {
+        console.log("Preparing prediction..."); // Лог для початку підготовки прогнозу
 
-    const handlePrediction = () => {
-        axios.post("http://localhost:5000/predict", {
+        axios.post("http://localhost:5000/prepare-predict", {
             country: country,
             age: age,
             sex: gender,
             year: year
         })
             .then((response) => {
-                console.log("Prediction response:", response.data);
+                console.log("Prediction response:", response.data); // Лог результату прогнозу
                 setPrediction(response.data);
+                handleSavePrediction(response.data); // Зберегти прогноз після отримання відповіді
             })
             .catch((error) => {
                 console.error("Error fetching prediction:", error);
             });
     };
 
+    const handleSavePrediction = (predictionData) => {
+        console.log("Saving prediction..."); // Лог для початку збереження прогнозу
+        const token = localStorage.getItem("authToken"); // Отримання токена із localStorage
+        if (!token) {
+            console.log("User is not logged in. Prediction will not be saved."); // Лог, якщо токен відсутній
+            return;
+        }
+
+        console.log("Token found, sending save request..."); // Лог токена перед запитом
+        axios.post("http://localhost:5000/save-prediction", {
+            model: predictionData.model,
+            r_squared: predictionData.r_squared,
+            rmse: predictionData.rmse,
+            prediction: predictionData.prediction,
+            country: predictionData.country,
+            age: predictionData.age,
+            sex: predictionData.sex,
+            year: predictionData.year
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`, // Додати токен у заголовок
+            }
+        })
+            .then((response) => {
+                console.log("Save prediction response:", response.data); // Лог результату збереження
+            })
+            .catch((error) => {
+                console.error("Error saving prediction:", error);
+            });
+    };
 
     return (
         <div className="predictor-container">
@@ -87,11 +119,11 @@ const UnemploymentRatePredictor = () => {
                     placeholder="Select Year"
                 />
 
-                <button onClick={handlePrediction}>Predict</button>
+                <button onClick={handlePreparePrediction}>Predict</button>
 
                 {prediction && (
                     <div className="prediction-result">
-                        <p><strong>Forecasted Value:</strong> {prediction.prediction*100}</p>
+                        <p><strong>Forecasted Value:</strong> {prediction.prediction * 100}</p>
                     </div>
                 )}
             </div>
