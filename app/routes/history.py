@@ -1,11 +1,11 @@
-
-from flask import Blueprint, jsonify, session
+from flask import Blueprint, jsonify, request
 import sqlite3
 from contextlib import contextmanager
+from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
 bp = Blueprint('history', __name__)
+SECRET_KEY = "your_secret_key"
 
-# Контекстний менеджер для роботи з базою даних
 @contextmanager
 def get_db_connection():
     conn = sqlite3.connect('users.db')
@@ -16,14 +16,22 @@ def get_db_connection():
     finally:
         conn.close()
 
-# Ендпоінт для отримання історії користувача, якщо він автентифікований
+def get_user_id_from_token():
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        return None
+
+    try:
+        payload = decode(token.split(" ")[1], SECRET_KEY, algorithms=["HS256"])
+        return payload.get("user_id")
+    except (ExpiredSignatureError, InvalidTokenError):
+        return None
+
 @bp.route('/api/user-history', methods=['GET'])
 def get_user_history():
-    # Перевірка, чи автентифікований користувач
-    if 'user_id' not in session:
+    user_id = get_user_id_from_token()
+    if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
-
-    user_id = session['user_id']  # Отримання ID користувача із сесії
 
     # Отримання історії прогнозів з бази даних
     with get_db_connection() as conn:
@@ -35,7 +43,6 @@ def get_user_history():
         ''', (user_id,))
         history = cursor.fetchall()  # Отримання всіх результатів як список рядків
 
-    # Форматування результатів у список словників
     history_list = [
         {
             "country": row["country"],

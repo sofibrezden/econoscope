@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Header.module.scss";
 import EconoscopeLogo from "../../../../assets/econoscope_logo.png";
 import EconoscopeTitle from "../../../../assets/econoscope_title.png";
@@ -8,13 +8,21 @@ function Header() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
 
-    // Check if the user is authenticated
+    // Check if the user is authenticated via JWT
     useEffect(() => {
         const checkAuthStatus = async () => {
             try {
+                const token = localStorage.getItem("authToken"); // Get token from localStorage
+                if (!token) {
+                    setIsAuthenticated(false);
+                    return;
+                }
+
                 const response = await fetch("http://127.0.0.1:5000/check-auth", {
                     method: "GET",
-                    credentials: "include", // Include credentials to check session cookies
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
 
                 if (response.ok) {
@@ -34,11 +42,17 @@ function Header() {
     // Logout handler
     const handleLogout = async () => {
         try {
+            const token = localStorage.getItem("authToken"); // Get token from localStorage
+            if (!token) {
+                console.error("No token found for logout");
+                return;
+            }
+
             const response = await fetch("http://127.0.0.1:5000/logout", {
                 method: "POST",
-                credentials: "include", // Include credentials for session handling
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
             });
 
@@ -48,6 +62,7 @@ function Header() {
             }
 
             console.log("Logout successful");
+            localStorage.removeItem("authToken"); // Remove token from localStorage
             setIsAuthenticated(false); // Update auth state
             navigate("/"); // Redirect to login page after logout
         } catch (error) {
@@ -59,8 +74,8 @@ function Header() {
         <div className={styles.headerContainer}>
             <Link to="/">
                 <div className={styles.logoContainer}>
-                    <img src={EconoscopeLogo} className={styles.logo} alt="Econoscope Logo"/>
-                    <img src={EconoscopeTitle} className={styles.title} alt="Econoscope Title"/>
+                    <img src={EconoscopeLogo} className={styles.logo} alt="Econoscope Logo" />
+                    <img src={EconoscopeTitle} className={styles.title} alt="Econoscope Title" />
                 </div>
             </Link>
             <div className={styles.buttonsContainer}>
@@ -80,7 +95,6 @@ function Header() {
                         <button className={styles.signUpButton}>Sign up</button>
                     </>
                 )}
-
             </div>
         </div>
     );
