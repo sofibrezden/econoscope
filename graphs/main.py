@@ -4,18 +4,14 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import requests
 import jwt
 from urllib.parse import urlparse, parse_qs
 import flask
-from flask import Blueprint, jsonify, request
+from flask import jsonify
 from contextlib import contextmanager
-from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
-# Load unemployment data
 unemployment_data = pd.read_csv('df_long_with_coordinates.csv')
-
-# Extract locations and prepare data
+df = pd.read_csv('df_long.csv')
 location1 = unemployment_data[['Country', 'latitude', 'longitude']]
 list_locations = location1.set_index('Country')[['latitude', 'longitude']].T.to_dict('dict')
 
@@ -23,7 +19,6 @@ region = unemployment_data['Continent'].unique()
 continent = unemployment_data['Continent'].unique()
 sex_categories = ['Total', 'Male', 'Female']
 
-# Initialize Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
@@ -35,11 +30,10 @@ SECRET_KEY = "your_secret_key"
 def check_user_registration():
     # Get the current URL or Referer header
     if flask.has_request_context():
-        # First, check the request URL
+
         parsed_url = urlparse(flask.request.url)
         query_params = parse_qs(parsed_url.query)
 
-        # If token is not in URL, check the Referer header
         if 'token' not in query_params and 'Referer' in flask.request.headers:
             referer_url = flask.request.headers.get('Referer')
             parsed_url = urlparse(referer_url)
@@ -59,7 +53,6 @@ def check_user_registration():
     return False, None
 
 
-# Database connection context manager
 @contextmanager
 def get_db_connection():
     conn = sqlite3.connect('../users.db')
@@ -71,8 +64,6 @@ def get_db_connection():
     finally:
         conn.close()
 
-
-# Function to get user prediction history
 def get_user_history():
     is_authenticated, user_id = check_user_registration()
     if not is_authenticated:
@@ -111,8 +102,6 @@ def get_user_history():
 
     return history_list
 
-
-# Example route to get user history
 @server.route('/user/history', methods=['GET'])
 def user_history():
     history = get_user_history()
@@ -352,7 +341,7 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
                 x=grouped_data['Country'],
                 y=grouped_data['UnemploymentRate'],
                 mode='lines+markers',
-                line=dict(color='#626058', width=2),
+                line=dict(color='#577564', width=2),
                 marker=dict(size=5, color='#626058'),
                 name='Trend Line',
                 hoverinfo='text',
@@ -386,33 +375,53 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
     }
 
 
-# Create pie chart for continent unemployment rate distribution
-@app.callback(Output('pie_chart', 'figure'),
-              [Input('select_year', 'value')])
-def update_pie_chart(select_year):
-    filtered_data = unemployment_data[unemployment_data['Year'] <= select_year]
-    continent_unemployment = filtered_data.groupby('Continent')['UnemploymentRate'].mean().reset_index()
+@app.callback(
+    Output('pie_chart', 'figure'),
+    [Input('select_year', 'value'),
+     Input('w_continent', 'value')]
+)
+def update_pie_chart(year, continent):
+    male_unemployment_rate = df[(df['Sex'] == 'Male') &
+                                (df['Year'] == year) &
+                                (df['Continent'] == continent)]['UnemploymentRate'].sum()
 
-    return {
+    female_unemployment_rate = df[(df['Sex'] == 'Female') &
+                                  (df['Year'] == year) &
+                                  (df['Continent'] == continent)]['UnemploymentRate'].sum()
+
+    total_unemployment_rate = male_unemployment_rate + female_unemployment_rate
+
+    if total_unemployment_rate == 0:
+        return {
+            'data': [],
+            'layout': {
+                'title': f'Unemployment Rate Distribution in {continent}, {year}',
+                'annotations': [{'text': 'No data available', 'x': 0.5, 'y': 0.5, 'showarrow': False}]
+            }
+        }
+
+    percent_male = (male_unemployment_rate * 100) / total_unemployment_rate
+    percent_female = (female_unemployment_rate * 100) / total_unemployment_rate
+
+    fig = {
         'data': [
-            go.Pie(
-                labels=continent_unemployment['Continent'],
-                values=continent_unemployment['UnemploymentRate'],
-                marker=dict(colors=['#FF00FF', '#9C0C38', 'orange', 'green', 'blue', 'purple']),
-                hoverinfo='label+value+percent',
-                textinfo='label+value',
-                textfont=dict(size=13)
-            )
+            {
+                'values': [percent_male, percent_female],
+                'labels': ['Male', 'Female'],
+                'type': 'pie',
+                'marker': {'colors': ['#626058', '#6A8E7C']},
+                'hoverinfo': 'label+percent+value',
+                'textinfo': 'label+percent',
+                'textfont': {'color': 'white', 'size': 16}
+            }
         ],
-        'layout': go.Layout(
-            title='Average Unemployment Rate by Continent up to ' + str(select_year),
-            titlefont=dict(color='#627254', size=20),
-            plot_bgcolor='#f9f9f9',
-            paper_bgcolor='#f9f9f9',
-            legend=dict(orientation='h', x=0.5, xanchor='center', y=-0.1),
-            hovermode='closest'
-        )
+        'layout': {
+            'title': f'Unemployment Rate Distribution in {continent}, {year}',
+            'showlegend': True
+        }
     }
+
+    return fig
 
 
 @app.callback(Output('unemployment_rate_graph', 'figure'),
