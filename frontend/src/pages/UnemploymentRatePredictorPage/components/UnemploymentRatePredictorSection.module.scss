@@ -1,0 +1,87 @@
+.container {
+  margin: auto;
+  margin-top: 40px;
+  max-width: 1360px;
+  height: 580px;
+
+  & > div {
+    display: flex;
+  justify-content: space-between;
+  }
+}
+
+.sectionTitle {
+  font-size: 48px;
+  font-weight: 500;
+  color: #627254;
+  text-align: center;
+}
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.formContainer {
+  width: 513px;
+  height: 500px;
+  border: 2px solid #627254;
+  border-radius: 4px;
+  margin-top: 40px;
+  padding: 30px 40px 0px 40px;
+
+
+
+  select {
+    width: 100%;
+    height: 47px;
+    border: 2px solid rgba(98, 114, 84, 1);
+    border-radius: 4px;
+    color: #76885b;
+    font-size: 24px;
+    padding: 0px 16px;
+    position: relative;
+
+    option {
+      font-size: 24px;
+      color: #76885b;
+    }
+  }
+
+  button {
+    width: 100%;
+    height: 47px;
+    background-color: #627254;
+    color: white;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+}
+
+.formTitle {
+  color: #627254;
+  font-size: 30px;
+  font-weight: 500;
+  width: 584px;
+  margin-bottom: 40px;
+}
+
+
+.resultContainer{
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px;
+
+  p {
+    color: #627254;
+    font-size: 24px;
+    margin-top: 30px;
+    word-break: break-all;
+    text-align: center;
+  }
+}
