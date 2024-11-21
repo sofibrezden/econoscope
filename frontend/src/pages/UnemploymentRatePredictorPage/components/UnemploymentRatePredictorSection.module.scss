@@ -6,7 +6,7 @@
 
   & > div {
     display: flex;
-  justify-content: space-between;
+    justify-content: space-between;
   }
 }
 
@@ -16,6 +16,7 @@
   color: #627254;
   text-align: center;
 }
+
 .inputContainer {
   display: flex;
   flex-direction: column;
@@ -29,8 +30,6 @@
   border-radius: 4px;
   margin-top: 40px;
   padding: 30px 40px 0px 40px;
-
-
 
   select {
     width: 100%;
@@ -69,8 +68,7 @@
   margin-bottom: 40px;
 }
 
-
-.resultContainer{
+.resultContainer {
   width: 50%;
   display: flex;
   flex-direction: column;
@@ -85,3 +83,47 @@
     text-align: center;
   }
 }
+
+.chartTitle {
+  color: #627254;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.customChart {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.customGrid {
+  stroke: #ccc;
+  stroke-dasharray: 5 5;
+}
+
+
+.customAxis {
+  stroke: #627254;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.customLine {
+  stroke: #627254;
+  stroke-width: 3;
+  fill: none;
+}
+.customTooltip {
+  font-size: 14px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.customLegend {
+  font-weight: bold;
+  color: #627254;
+}
+
