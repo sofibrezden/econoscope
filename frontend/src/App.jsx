@@ -7,6 +7,7 @@ import Login from "./pages/HomePage/Login";
 import UserHistoryPage from "./pages/UserHistoryPage/UserHistoryPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PredictorForm from "./pages/PredictorForm/PredictorForm";
 
 function App() {
   return (
