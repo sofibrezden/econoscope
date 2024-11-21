@@ -7,6 +7,7 @@ def init_db():
     cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT UNIQUE NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
                         password TEXT NOT NULL
                       )''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS predictions (
@@ -33,11 +34,11 @@ def get_user_id(username):
     conn.close()
     return user_id[0] if user_id else None
 
-def save_user(username, password):
+def save_user(username, email, password):
     hashed_password = generate_password_hash(password)
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+    cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_password))
     conn.commit()
     conn.close()
 
