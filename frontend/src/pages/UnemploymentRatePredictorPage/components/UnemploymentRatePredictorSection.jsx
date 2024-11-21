@@ -23,7 +23,7 @@ const UnemploymentRatePredictorSection = () => {
     const [countries, setCountries] = useState([]);
     const [ages, setAges] = useState([]);
     const [genders, setGenders] = useState([]);
-    const [result, setResult] = useState("");
+    const [result, setResult] = useState(null);
     const [hasPrediction, setHasPrediction] = useState(false);
 
     useEffect(() => {
@@ -82,7 +82,7 @@ const UnemploymentRatePredictorSection = () => {
             setFilters({country: values.country, gender: values.sex, age: values.age});
             setHasPrediction(true);
         } catch (error) {
-            setResult("");
+            setResult(null);
             toast.error("Wrong Data");
         }
     }, []);
@@ -92,6 +92,7 @@ const UnemploymentRatePredictorSection = () => {
         if (!token) {
             return;
         }
+
 
         axios
             .post(
@@ -147,7 +148,6 @@ const UnemploymentRatePredictorSection = () => {
 
     console.log(placeholderData);
 
-
     const chartTitle = hasPrediction
         ? `Unemployment rate in ${filters.country !== "All" ? filters.country : "All Countries"} from 2014 to 2024`
         : "";
@@ -186,6 +186,7 @@ const UnemploymentRatePredictorSection = () => {
                                 </Field>
                             </div>
 
+
                             <div>
                                 <Field as="select" name="country">
                                     <option disabled value="">
@@ -218,6 +219,7 @@ const UnemploymentRatePredictorSection = () => {
                         </Form>
                     </Formik>
                 </div>
+
                 {loading ? (
                     <Spin size="large"/>
                 ) : (
@@ -255,11 +257,16 @@ const UnemploymentRatePredictorSection = () => {
                                     />
                                 )}
                             </LineChart>
-
                         </ResponsiveContainer>
-                    </div>
+            {result !== null && (
+                <p style={{ color: '#627254', fontWeight: 'bold', marginTop: '20px', fontSize: '18px' }}>
+                    <b>Result:</b> {result} %
+                </p>
+            )}
+        </div>
                 )}
             </div>
+
         </div>
     );
 };
