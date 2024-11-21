@@ -6,31 +6,73 @@ import ChartImage from "../../../assets/chart.png";
 import { toast } from "react-toastify";
 
 function UnemploymentRatePredictorSection() {
-  const [data, setData] = useState({ ages: [], countries: [], sexes: [] });
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [country, setCountry] = useState("");
+  const [year, setYear] = useState("");
+
+  const [countries, setCountries] = useState([]);
+  const [ages, setAges] = useState([]);
+  const [genders, setGenders] = useState([]);
+
   const [result, setResult] = useState("");
 
-  const getDataRequest = useCallback(async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/api/form-data");
-      setData(response.data);
-    } catch (error) {
-      toast.error("Error fetching form data");
-    }
-  }, []);
-
-  useEffect(() => {
-    getDataRequest();
-  }, [getDataRequest]);
+   useEffect(() => {
+        console.log("Fetching form data from backend..."); // Лог для перевірки початку запиту
+        axios.get("http://localhost:5000/form-data")
+            .then((response) => {
+                console.log("Fetched form data:", response.data); // Вивід у консоль для перевірки отриманих даних
+                setCountries(response.data.countries);
+                setAges(response.data.ages);
+                setGenders(response.data.sexes);
+            })
+            .catch((error) => {
+                console.error("Error fetching form data:", error);
+            });
+    }, []);
 
   const handlePrediction = useCallback(async (values) => {
     try {
-      const data = await axios.post("http://localhost:5000/predict", values);
-      setResult(JSON.stringify(data.data));
+      const data = await axios.post("http://localhost:5000/prepare-predict", values);
+      const predictionValue = data.data.prediction * 100; // Extract and scale the prediction
+      setResult(predictionValue.toFixed(2));
+      handleSavePrediction(data.data);
     } catch (error) {
       setResult("");
       toast.error("Wrong Data");
     }
   }, []);
+
+  const handleSavePrediction = (predictionData) => {
+        console.log("Saving prediction..."); // Лог для початку збереження прогнозу
+        const token = localStorage.getItem("authToken"); // Отримання токена із localStorage
+        if (!token) {
+            console.log("User is not logged in. Prediction will not be saved."); // Лог, якщо токен відсутній
+            return;
+        }
+
+        console.log("Token found, sending save request..."); // Лог токена перед запитом
+        axios.post("http://localhost:5000/save-prediction", {
+            model: predictionData.model,
+            r_squared: predictionData.r_squared,
+            rmse: predictionData.rmse,
+            prediction: predictionData.prediction,
+            country: predictionData.country,
+            age: predictionData.age,
+            sex: predictionData.sex,
+            year: predictionData.year
+        }, {
+            headers: {
+                'Authorization': `Bearer ${token}`, // Додати токен у заголовок
+            }
+        })
+            .then((response) => {
+                console.log("Save prediction response:", response.data); // Лог результату збереження
+            })
+            .catch((error) => {
+                console.error("Error saving prediction:", error);
+            });
+    };
 
   return (
     <div className={styles.container}>
@@ -48,7 +90,7 @@ function UnemploymentRatePredictorSection() {
                   <option disabled value="">
                     Select Age
                   </option>
-                  {data.ages.map((item) => (
+                  {ages.map((item) => (
                     <option value={item} key={item}>
                       {item}
                     </option>
@@ -61,7 +103,7 @@ function UnemploymentRatePredictorSection() {
                   <option disabled value="">
                     Select Gender
                   </option>
-                  {data.sexes.map((item) => (
+                  {genders.map((item) => (
                     <option value={item} key={item}>
                       {item}
                     </option>
@@ -74,7 +116,7 @@ function UnemploymentRatePredictorSection() {
                   <option disabled value="">
                     Select Country
                   </option>
-                  {data.countries.map((item) => (
+                  {countries.map((item) => (
                     <option value={item} key={item}>
                       {item}
                     </option>
@@ -104,7 +146,7 @@ function UnemploymentRatePredictorSection() {
         <div className={styles.resultContainer}>
           <img src={ChartImage} alt="chart" />
           <p>
-            <b>Result:</b> {result}
+            <b>Result:</b> {result} %
           </p>
         </div>
       </div>
