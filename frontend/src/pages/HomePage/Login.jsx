@@ -68,7 +68,7 @@ function Login() {
               <p className={styles.welcome_back}>Welcome Back</p>
               <div>
                 <label htmlFor="username">Username </label>
-                <Field id="username" name="username" placeholder="Oleg" />
+                <Field id="username" name="username" placeholder="Username" />
               </div>
               <div>
                 <label htmlFor="password">Password </label>
@@ -80,7 +80,7 @@ function Login() {
                 />
               </div>
               <div className={styles.buttons_container}>
-                <button className={styles.sign_up_button}>Sign In</button>
+                <button className={styles.sign_up_button}>Login</button>
                 <p className={styles.sub_text}>
                   Don`t have an account?{" "}
                   <a href="/register" className={styles.sign_in_link}>
