@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, {useState, useEffect} from "react";
+import {Link, useNavigate} from "react-router-dom";
 import styles from "./Header.module.scss";
 import EconoscopeLogo from "../../../../assets/econoscope_logo.png";
 import EconoscopeTitle from "../../../../assets/econoscope_title.png";
@@ -74,8 +74,8 @@ function Header() {
         <div className={styles.headerContainer}>
             <Link to="/">
                 <div className={styles.logoContainer}>
-                    <img src={EconoscopeLogo} className={styles.logo} alt="Econoscope Logo" />
-                    <img src={EconoscopeTitle} className={styles.title} alt="Econoscope Title" />
+                    <img src={EconoscopeLogo} className={styles.logo} alt="Econoscope Logo"/>
+                    <img src={EconoscopeTitle} className={styles.title} alt="Econoscope Title"/>
                 </div>
             </Link>
             <div className={styles.buttonsContainer}>
@@ -85,14 +85,16 @@ function Header() {
                 {isAuthenticated ? (
                     <>
                         <Link to="/history">History</Link>
-                        <button className={styles.signInButton} onClick={handleLogout}>Log out</button>
+                        <button className={styles.logOutButton} onClick={handleLogout}>Log out</button>
                     </>
                 ) : (
                     <>
                         <Link to="/login">
                             <button className={styles.signInButton}>Sign in</button>
                         </Link>
-                        <button className={styles.signUpButton}>Sign up</button>
+                        <Link to="/register">
+                            <button className={styles.signUpButton}>Sign up</button>
+                        </Link>
                     </>
                 )}
             </div>

@@ -1,8 +1,10 @@
+import sqlite3
+
 from flask import Blueprint, render_template, redirect, url_for, jsonify, session, request
 from .history import get_db_connection
-from ..models import save_user
+from ..models import save_user, init_db
 from flask_cors import CORS
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 from datetime import datetime, timedelta, timezone
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -12,18 +14,31 @@ SECRET_KEY = "your_secret_key"
 bp = Blueprint('auth', __name__)
 CORS(bp, supports_credentials=True, origins=["http://localhost:3000"])
 
-
-@bp.route('/register', methods=['GET', 'POST'])
+init_db()
+@bp.route('/register', methods=['POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        try:
-            save_user(username, password)
-            return redirect(url_for('auth.login'))
-        except:
-            return jsonify({'error': 'Username already exists!'}), 400
-    return render_template('register.html')
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not username or not email or not password:
+        return jsonify({"error": "Username, email, and password are required"}), 400
+
+    hashed_password = generate_password_hash(password)
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                           (username, email, hashed_password))
+            conn.commit()
+    except sqlite3.IntegrityError as e:
+        if 'UNIQUE constraint failed' in str(e):
+            return jsonify({"error": "Username or email already exists"}), 400
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"message": "User registered successfully"}), 201
 
 
 @bp.route('/login', methods=['POST'])
