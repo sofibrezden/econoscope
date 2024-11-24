@@ -54,14 +54,14 @@ const Register = () => {
               <p className={styles.welcome_back}>Join us now</p>
               <div>
                 <label htmlFor="username">Username </label>
-                <Field id="username" name="username" placeholder="Oleg" />
+                <Field id="username" name="username" placeholder="username" />
               </div>
               <div>
                 <label htmlFor="username">Email </label>
                 <Field
                   id="email"
                   name="email"
-                  placeholder="oleg.petrenko@gmail.com"
+                  placeholder="yourmail@gmail.com"
                 />
               </div>
               <div>
