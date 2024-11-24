@@ -7,7 +7,7 @@ import Login from "./pages/HomePage/Login";
 import UserHistoryPage from "./pages/UserHistoryPage/UserHistoryPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import PredictorForm from "./pages/PredictorForm/PredictorForm";
+import RegisterPage from "./pages/RegistrationPage/Registration";
 
 function App() {
   return (
@@ -18,6 +18,7 @@ function App() {
         <Route path="/visualization" element={<Visualization />} />
         <Route path="/history" element={<UserHistoryPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
       <ToastContainer />
     </Router>
