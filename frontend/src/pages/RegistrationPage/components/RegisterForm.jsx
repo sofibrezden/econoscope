@@ -1,82 +1,90 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import '../components/RegisterForm.scss';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "../components/RegisterForm.scss";
+import styles from "./RegisterForm.module.scss";
+import { Field, Form, Formik } from "formik";
+import SignUp from "../../../assets/sign_up.png";
+import { toast } from "react-toastify";
 
 const Register = () => {
-    const [username, setUsername] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setError('');
-        setMessage('');
+  const handleRegister = async (value) => {
+    if (!value.username || !value.email || !value.password) {
+      toast.error("Fields are required ");
+      return;
+    }
 
-        if (!username || !email || !password) {
-            setError('Username, email, and password are required');
-            return;
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/register",
+        value,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
 
-        try {
-            const response = await axios.post('http://localhost:5000/register', {
-                username,
-                email,
-                password,
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+      navigate("/login");
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        toast.error(err.response.data.error);
+      } else {
+        toast.error("An error occurred during registration");
+      }
+    }
+  };
 
-            setMessage(response.data.message);
-            navigate('/login');
-        } catch (err) {
-            if (err.response && err.response.data && err.response.data.error) {
-                setError(err.response.data.error);
-            } else {
-                setError('An error occurred during registration');
-            }
-        }
-    };
-
-    return (
-        <div className="register-container">
-            <h2>Register</h2>
-            <form onSubmit={handleRegister}>
-                <div className="form-group">
-                    <label>Username:</label>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Email:</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Password:</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                </div>
-                <button type="submit">Register</button>
-            </form>
-            {message && <p className="success-message">{message}</p>}
-            {error && <p className="error-message">{error}</p>}
+  return (
+    <>
+      <div className={styles.root}>
+        <div>
+          <h1>Econoscope</h1>
+          <Formik
+            initialValues={{
+              email: "",
+              username: "",
+              password: "",
+            }}
+            onSubmit={handleRegister}
+          >
+            <Form className={styles.form}>
+              <p className={styles.welcome_back}>Join us now</p>
+              <div>
+                <label htmlFor="username">Username </label>
+                <Field id="username" name="username" placeholder="Oleg" />
+              </div>
+              <div>
+                <label htmlFor="username">Email </label>
+                <Field
+                  id="email"
+                  name="email"
+                  placeholder="oleg.petrenko@gmail.com"
+                />
+              </div>
+              <div>
+                <label htmlFor="password">Password </label>
+                <Field
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="∗∗∗∗∗∗∗∗∗∗∗"
+                />
+              </div>
+              <div className={styles.buttons_container}>
+                <button className={styles.sign_up_button}>Sign Up</button>
+              </div>
+            </Form>
+          </Formik>
         </div>
-    );
+        <div className={styles.container_for_image}>
+          <img src={SignUp} alt="Auth Image" fill />
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default Register;
