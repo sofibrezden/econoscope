@@ -80,7 +80,7 @@ function Login() {
                 />
               </div>
               <div className={styles.buttons_container}>
-                <button className={styles.sign_up_button}>Sign Up</button>
+                <button className={styles.sign_up_button}>Sign In</button>
                 <p className={styles.sub_text}>
                   Don`t have an account?{" "}
                   <a href="/register" className={styles.sign_in_link}>
