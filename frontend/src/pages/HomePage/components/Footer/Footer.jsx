@@ -31,8 +31,10 @@ function Footer() {
         <p className={styles.newsletterTitle}>
           Join our online community for free. No spam{" "}
         </p>
-        <input type="text" placeholder="Enter your email..." />
-        <button className={styles.subscribe}>Subscribe</button>
+        <div className={styles.wrapper}>
+          <input type="text" placeholder="Enter your email..." />
+          <button className={styles.subscribe}>Subscribe</button>
+        </div>
       </div>
     </div>
   );
