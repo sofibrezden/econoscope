@@ -17,7 +17,7 @@ body {
 .dcc_compon {
     margin: 0;
     padding: 5px;
-    width: calc(100%-40px);
+    width: calc(100% - 40px);
 }
 
 .fix_label {
@@ -26,8 +26,21 @@ body {
     margin: 0;
     padding: 10px;
     padding-bottom: 0px;
-    margin-bottom: 0px;
     width: calc(100% - 40px);
+}
+.first_section {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    padding: 10px;
+    width: calc(100% - 20px);
+}
+.third_section {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding: 10px;
+    width: calc(100% - 20px);
 }
 
 .flex-display {
