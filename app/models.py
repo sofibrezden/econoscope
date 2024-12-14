@@ -17,9 +17,6 @@ def init_db():
                         age TEXT,
                         sex TEXT,
                         year INTEGER,
-                        model TEXT,
-                        r_squared REAL,
-                        rmse REAL,
                         prediction REAL,
                         FOREIGN KEY (user_id) REFERENCES users (id)
                       )''')
@@ -52,20 +49,27 @@ def check_user_credentials(username, password):
         return check_password_hash(result[0], password)
     return False
 
-def save_prediction(user_id, country, age, sex, year, model, r_squared, rmse, prediction):
+def save_prediction(user_id, country, age, sex, year, prediction):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO predictions (user_id, country, age, sex, year, model, r_squared, rmse, prediction)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                   (user_id, country, age, sex, year, model, r_squared, rmse, prediction))
+    cursor.execute('''INSERT INTO predictions (user_id, country, age, sex, year, prediction)
+                      VALUES (?, ?, ?, ?, ?, ?)''',
+                   (user_id, country, age, sex, year, prediction))
     conn.commit()
     conn.close()
 
 def get_user_predictions(user_id):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('''SELECT country, age, sex, year, model, r_squared, rmse, prediction
+    cursor.execute('''SELECT country, age, sex, year, prediction
                       FROM predictions WHERE user_id = ?''', (user_id,))
     history = cursor.fetchall()
     conn.close()
     return history
+
+def delete_prediction(prediction_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM predictions WHERE id = ?", (prediction_id,))
+    conn.commit()
+    conn.close()

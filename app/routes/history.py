@@ -9,8 +9,8 @@ SECRET_KEY = "your_secret_key"
 @contextmanager
 def get_db_connection():
     conn = sqlite3.connect('users.db')
-    conn.row_factory = sqlite3.Row  # Дозволяє доступ до колонок за назвами
-    conn.execute("PRAGMA foreign_keys = ON")  # Включення підтримки зовнішніх ключів
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON") 
     try:
         yield conn
     finally:
@@ -33,15 +33,14 @@ def get_user_history():
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
-    # Отримання історії прогнозів з бази даних
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT country, age, sex, year, model, r_squared, rmse, prediction 
+            SELECT country, age, sex, year, prediction 
             FROM predictions 
             WHERE user_id = ?
         ''', (user_id,))
-        history = cursor.fetchall()  # Отримання всіх результатів як список рядків
+        history = cursor.fetchall()
 
     history_list = [
         {
@@ -49,9 +48,6 @@ def get_user_history():
             "age": row["age"],
             "sex": row["sex"],
             "year": row["year"],
-            "model": row["model"],
-            "r_squared": row["r_squared"],
-            "rmse": row["rmse"],
             "prediction": row["prediction"]
         }
         for row in history
