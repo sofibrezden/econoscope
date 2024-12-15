@@ -3,7 +3,7 @@ import styles from "./UnemploymentRatePredictorSection.module.scss";
 import {useCallback, useEffect, useState} from "react";
 import axios from "axios";
 import {toast} from "react-toastify";
-import df_long from "../../data/df_long.csv";
+import yearly_data from "../../data/yearly_unemployment_data.csv";
 import {parse} from "papaparse";
 import React from "react";
 import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer} from "recharts";
@@ -28,7 +28,7 @@ const UnemploymentRatePredictorSection = () => {
 
     useEffect(() => {
         setLoading(true);
-        fetch(df_long)
+        fetch(yearly_data)
             .then((response) => response.text())
             .then((text) => {
                 parseCSV(text);
@@ -43,17 +43,20 @@ const UnemploymentRatePredictorSection = () => {
             skipEmptyLines: true,
             complete: (result) => {
                 const parsedData = result.data.map((item) => ({
-                    year: item.Year ? item.Year.trim() : "",
-                    country: item.Country ? item.Country.trim() : "",
-                    gender: item.Sex ? item.Sex.trim() : "",
-                    age: item.Age ? item.Age.trim() : "",
-                    UnemploymentRate: item.UnemploymentRate ? parseFloat(item.UnemploymentRate) : 0,
+                    year: item["Year"] ? item["Year"].trim() : "",
+                    country: item["Country"] ? item["Country"].trim() : "",
+                    gender: item["Sex"] ? item["Sex"].trim() : "",
+                    age: item["Age"] ? item["Age"].trim() : "",
+                    UnemploymentRate: item["Unemployment Rate (%)"]
+                        ? parseFloat(item["Unemployment Rate (%)"])
+                        : 0,
                 }));
                 setData(parsedData);
                 extractCountries(parsedData);
             },
         });
     };
+
 
     const extractCountries = (parsedData) => {
         const uniqueCountries = [...new Set(parsedData.map((item) => item.country))];
@@ -79,7 +82,12 @@ const UnemploymentRatePredictorSection = () => {
             const predictionValue = response.data.prediction * 100;
             setResult(predictionValue.toFixed(2));
             handleSavePrediction(response.data);
-            setFilters({country: values.country, gender: values.sex, age: values.age});
+            setFilters({
+                country: values.country,
+                gender: values.sex,
+                age: values.age,
+                year: values.year, // Додаємо рік у фільтри
+            });
             setHasPrediction(true);
         } catch (error) {
             setResult(null);
@@ -98,9 +106,6 @@ const UnemploymentRatePredictorSection = () => {
             .post(
                 "http://localhost:5000/save-prediction",
                 {
-                    model: predictionData.model,
-                    r_squared: predictionData.r_squared,
-                    rmse: predictionData.rmse,
                     prediction: predictionData.prediction,
                     country: predictionData.country,
                     age: predictionData.age,
@@ -127,18 +132,20 @@ const UnemploymentRatePredictorSection = () => {
             return (
                 (filters.country === "All" || item.country === filters.country) &&
                 (filters.gender === "All" || item.gender === filters.gender) &&
-                (filters.age === "All" || item.age === filters.age)
+                (filters.age === "All" || item.age === filters.age) &&
+                (!filters.year || parseInt(item.year) <= parseInt(filters.year))
             );
         });
         return filteredData;
     };
+
 
     const filteredData = filterData();
 
     const startYear = 2014;
     const endYear = 2024;
 
-    const placeholderData = Array.from({length: endYear - startYear + 1}, (_, index) => {
+    const placeholderData = Array.from({length: parseInt(filters.year || endYear) - startYear + 1}, (_, index) => {
         const year = startYear + index;
         return {
             year: year.toString(),
@@ -146,11 +153,15 @@ const UnemploymentRatePredictorSection = () => {
         };
     });
 
-    console.log(placeholderData);
+    console.log(filteredData);
 
     const chartTitle = hasPrediction
-        ? `Unemployment rate in ${filters.country !== "All" ? filters.country : "All Countries"} from 2014 to 2024`
+        ? `Unemployment rate in ${filters.country !== "All" ? filters.country : "All Countries"} 
+           for ${filters.age !== "All" ? filters.age : "All Ages"} 
+           and ${filters.gender !== "All" ? filters.gender : "All Genders"} 
+           from 2014 to 2024`
         : "";
+
 
     return (
         <div className={styles.container}>
@@ -243,28 +254,116 @@ const UnemploymentRatePredictorSection = () => {
                                 <CartesianGrid className={styles.customGrid}/>
                                 <XAxis dataKey="year" className={styles.customAxis}/>
                                 <YAxis domain={[0, 0.9]} className={styles.customAxis}/>
-                                <Tooltip className={styles.customTooltip}/>
-                                <Legend className={styles.customLegend}/>
-                                {hasPrediction && filteredData.length > 0 && (
-                                    <Line
-                                        type="monotone"
-                                        dataKey="UnemploymentRate"
-                                        className={styles.customLine}
-                                        stroke="#627254"
-                                        strokeWidth={3}
-                                        dot={{stroke: '#627254', strokeWidth: 2, r: 4}}
-                                        activeDot={{r: 6}}
-                                    />
-                                )}
+                                <Tooltip
+                                    content={({active, payload}) => {
+                                        if (active && payload && payload.length) {
+                                            const year = payload[0].payload.year;
+                                            const rate = payload[0].value.toFixed(2);
+                                            const isPredicted = year >= "2024";
+                                            return (
+                                                <div className={styles.customTooltip}>
+                                                    <p style={{fontSize: '21px', margin: '8px 0'}}>{`Year: ${year}`}</p>
+                                                    <p style={{
+                                                        fontSize: '18px',
+                                                        margin: '8px 0'
+                                                    }}>{`Unemployment Rate: ${rate}%`}</p>
+                                                    {isPredicted && (
+                                                        <p style={{
+                                                            color: 'red',
+                                                            fontSize: '13px',
+                                                            margin: '8px 0',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            Predicted
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+
+                                <Legend
+                                    content={() => (
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            marginTop: '10px',
+                                            fontSize: '12px'
+                                        }}>
+                                            <div style={{display: 'flex', alignItems: 'center', marginRight: '20px'}}>
+                                                <div
+                                                    style={{
+                                                        width: '10px',
+                                                        height: '10px',
+                                                        backgroundColor: '#627254',
+                                                        borderRadius: '50%',
+                                                        marginRight: '5px',
+                                                    }}
+                                                ></div>
+                                                <span>Actual Data</span>
+                                            </div>
+                                            <div style={{display: 'flex', alignItems: 'center'}}>
+                                                <div
+                                                    style={{
+                                                        width: '10px',
+                                                        height: '10px',
+                                                        backgroundColor: '#FF0000',
+                                                        borderRadius: '50%',
+                                                        marginRight: '5px',
+                                                    }}
+                                                ></div>
+                                                <span>Predicted Data</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                />
+                                {
+                                    hasPrediction && filteredData.length > 0 && (
+                                        <Line
+                                            type="monotone"
+                                            dataKey="UnemploymentRate"
+                                            stroke="#627254"
+                                            strokeWidth={3}
+                                            dot={(dotProps) => {
+                                                const {cx, cy, payload} = dotProps;
+                                                return (
+                                                    <circle
+                                                        cx={cx}
+                                                        cy={cy}
+                                                        r={4}
+                                                        fill={payload.year >= "2024" ? "#FF0000" : "#627254"}
+                                                        stroke={payload.year >= "2024" ? "#FF0000" : "#627254"}
+                                                    />
+                                                );
+                                            }}
+                                            activeDot={{r: 6}}
+                                            strokeDasharray={(data) =>
+                                                data.year >= "2024" ? "3 3" : "0"
+                                            }
+                                        />
+                                    )
+                                }
                             </LineChart>
                         </ResponsiveContainer>
-            {result !== null && (
-                <p style={{ color: '#627254', fontWeight: 'bold', marginTop: '20px', fontSize: '18px' }}>
-                    <b>Result:</b> {result} %
-                </p>
-            )}
-        </div>
-                )}
+
+
+                        {
+                            result !== null && (
+                                <p style={{
+                                    color: '#627254',
+                                    fontWeight: 'bold',
+                                    marginTop: '20px',
+                                    fontSize: '18px'
+                                }}>
+                                    <b>Result:</b> {result} %
+                                </p>
+                            )
+                        }
+                    </div>
+                )
+                }
             </div>
 
         </div>

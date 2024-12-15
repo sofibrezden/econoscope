@@ -3,20 +3,10 @@ import pandas as pd
 from flask_cors import CORS
 
 bp = Blueprint('main', __name__)
-CORS(bp, supports_credentials=True, origins="http://localhost:3000")  # Enable credentials support),
+CORS(bp, supports_credentials=True)
 
-df = pd.read_csv('result_sarima_arima.csv',
-                 names=["Model", "Country", "Age", "Sex", "Date", "Forecast", "R^2", "MSE", "RMSE", "MAPE"], header=0)
-
-
-def get_best_model(subset):
-    return subset.loc[subset['R^2'].idxmax()]
-
-
-@bp.route('/')
-def index():
-    countries = df['Country'].unique()
-    return render_template('index.html', countries=countries)
+df = pd.read_csv('../yearly_unemployment_data.csv',
+                 names=["Year", "Country", "Age", "Sex", "Forecast"], header=0)
 
 
 @bp.route('/form-data', methods=['GET'])
