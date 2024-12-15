@@ -12,7 +12,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 SECRET_KEY = "your_secret_key"
 
 bp = Blueprint('auth', __name__)
-CORS(bp, supports_credentials=True, origins=["http://localhost:3000"])
+CORS(bp,resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 init_db()
 @bp.route('/register', methods=['POST'])
@@ -43,9 +43,13 @@ def register():
 
 @bp.route('/login', methods=['POST'])
 def login():
+    print("Login route accessed")
     data = request.get_json()
+    print(f"Received data: {data}")
+
     username = data.get('username')
     password = data.get('password')
+    print(f"Username: {username}, Password: {password}")
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -54,8 +58,9 @@ def login():
 
     if user and check_password_hash(user["password"], password):
         token = generate_token(user["id"])
+        print("Login successful, token generated")
         return jsonify({"message": "Login successful", "token": token}), 200
-
+    print("Invalid username or password")
     return jsonify({"error": "Invalid username or password"}), 400
 
 
@@ -64,7 +69,7 @@ def login():
 def logout():
     token = request.headers.get("Authorization")
     if token and token.startswith("Bearer "):
-        token = token.split(" ")[1]  # Забираємо тільки сам токен без "Bearer"
+        token = token.split(" ")[1]
         try:
             jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             return jsonify({"message": "Logout successful"}), 200
@@ -87,7 +92,7 @@ def generate_token(user_id):
 def decode_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        print("Decoded payload:", payload)  # Додаткове логування для перевірки токену
+        print("Decoded payload:", payload)
         return payload["user_id"]
     except ExpiredSignatureError:
         print("Token has expired")
@@ -102,7 +107,7 @@ def decode_token(token):
 def check_auth():
     token = request.headers.get("Authorization")
     if token and token.startswith("Bearer "):
-        token = token.split(" ")[1]  # Забираємо тільки сам токен без "Bearer"
+        token = token.split(" ")[1]
         user_id = decode_token(token)
         if user_id:
             print("User authenticated:", user_id)
@@ -111,7 +116,4 @@ def check_auth():
             print("Token validation failed")
     else:
         print("No valid Authorization header found")
-        # Тимчасовий код для тестування
-        # return jsonify({"authenticated": True}), 200
-
     return jsonify({"authenticated": False}), 401
