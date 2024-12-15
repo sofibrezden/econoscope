@@ -1,3 +1,60 @@
+th {
+  padding: 25px 0px;
+  text-align: left;
+}
+
+td {
+  padding: 18px 0px;
+  background-color: #DDDD;
+}
+
+.firstColumn {
+  padding-left: 10px;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+table, th, td {
+  color: #627254;
+  font-size: 20px;
+}
+
+table {
+  width: 100%;
+}
+
+.bin {
+  color: #8f0000;
+  font-weight: 700;
+  font-size: 24px;
+  border: none;
+  background-color: #8f000024;
+  display: block;
+  width: 50px;
+  height: 40px;
+  margin: auto;
+  margin-left: 15px;
+  margin-top: 8px;
+  border-radius: 5px;
+}
+
+.stability {
+  color: #e6a21c;
+  width: 110px;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.decrease {
+    color: #007a0a;
+    width: 110px;
+}
+
+.increase {
+  color: #8f0000;
+  width: 110px;
+}
+
 .pastForecasts {
   flex-direction: column;
   margin-left: 160px;
