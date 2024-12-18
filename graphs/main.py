@@ -570,7 +570,7 @@ def update_unemployment_rate_graph(w_prediction):
     ))
 
     fig.update_layout(
-        title=f"Unemployment Rate in {country}, Age: {age}, Sex: {sex}, for (2014-{year}) years",
+        title=f"Unemployment Rate : {country}, {age},{sex},2014-{year} years",
         titlefont=dict(color='#626058', size=20),
         xaxis=dict(
             title='<b>Year</b>',
