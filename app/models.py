@@ -61,11 +61,12 @@ def save_prediction(user_id, country, age, sex, year, prediction):
 def get_user_predictions(user_id):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('''SELECT country, age, sex, year, prediction
+    cursor.execute('''SELECT id, country, age, sex, year, prediction
                       FROM predictions WHERE user_id = ?''', (user_id,))
     history = cursor.fetchall()
     conn.close()
     return history
+
 
 def delete_prediction(prediction_id):
     conn = sqlite3.connect('users.db')
