@@ -2,7 +2,7 @@ import pandas as pd
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 from jwt import ExpiredSignatureError, InvalidTokenError, decode
-from ..models import save_prediction
+from ..models import save_prediction, delete_prediction
 
 bp = Blueprint('prediction', __name__)
 CORS(bp, supports_credentials=True, origins="http://localhost:3000")
@@ -10,7 +10,7 @@ CORS(bp, supports_credentials=True, origins="http://localhost:3000")
 SECRET_KEY = "your_secret_key"
 
 
-df = pd.read_csv('../yearly_unemployment_data.csv',
+df = pd.read_csv('yearly_unemployment_data.csv',
                  names=["Year", "Country", "Age", "Sex", "Forecast"], header=0)
 
 
@@ -83,3 +83,24 @@ def save_prediction_endpoint():
         return jsonify({"message": "Prediction saved successfully"}), 200
     else:
         return jsonify({"error": "Invalid input format, JSON expected"}), 400
+
+
+@bp.route('/delete-prediction', methods=['DELETE'])
+def delete_prediction_endpoint():
+    try:
+        user_id = get_user_id_from_token()
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
+        data = request.get_json()
+        prediction_id = data.get('prediction_id')
+
+        if not prediction_id:
+            return jsonify({"error": "Missing prediction_id"}), 400
+
+        delete_prediction(prediction_id)
+        return jsonify({"message": "Prediction deleted successfully"}), 200
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal server error"}), 500

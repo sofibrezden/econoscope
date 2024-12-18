@@ -3,6 +3,8 @@ import sqlite3
 from contextlib import contextmanager
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
 
+from app.models import get_user_predictions
+
 bp = Blueprint('history', __name__)
 SECRET_KEY = "your_secret_key"
 
@@ -33,24 +35,17 @@ def get_user_history():
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT country, age, sex, year, prediction 
-            FROM predictions 
-            WHERE user_id = ?
-        ''', (user_id,))
-        history = cursor.fetchall()
-
-    history_list = [
+    predictions = get_user_predictions(user_id)
+    history = [
         {
-            "country": row["country"],
-            "age": row["age"],
-            "sex": row["sex"],
-            "year": row["year"],
-            "prediction": row["prediction"]
+            "id": row[0],
+            "country": row[1],
+            "age": row[2],
+            "sex": row[3],
+            "year": row[4],
+            "prediction": row[5],
         }
-        for row in history
+        for row in predictions
     ]
 
-    return jsonify(history_list)
+    return jsonify(history), 200
