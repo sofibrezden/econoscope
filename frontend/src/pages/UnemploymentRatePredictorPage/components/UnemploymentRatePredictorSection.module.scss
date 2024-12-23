@@ -31,22 +31,6 @@
   margin-top: 40px;
   padding: 30px 40px 0px 40px;
 
-  select {
-    width: 100%;
-    height: 47px;
-    border: 2px solid rgba(98, 114, 84, 1);
-    border-radius: 4px;
-    color: #76885b;
-    font-size: 24px;
-    padding: 0px 16px;
-    position: relative;
-
-    option {
-      font-size: 24px;
-      color: #76885b;
-    }
-  }
-
   button {
     width: 100%;
     height: 47px;
@@ -85,11 +69,15 @@
 }
 
 .chartTitle {
+  text-align: center;
+  margin: 0 auto;
   color: #627254;
+  line-height: 1.4;
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 20px;
+  word-wrap: break-word;
 }
+
 
 .customChart {
   background-color: #f9f9f9;
@@ -104,9 +92,8 @@
 
 
 .customAxis {
-  stroke: #627254;
+  stroke: #4B5945;
   font-size: 14px;
-  font-weight: bold;
 }
 
 .customLine {
