@@ -269,9 +269,10 @@ def update_continent_map(w_continent, select_year, w_gender):
         (unemployment_data['Continent'] == w_continent) &
         (unemployment_data['Year'] == select_year) &
         (unemployment_data['Sex'] == w_gender)
-        ]
+    ]
 
     if not terr3.empty:
+        terr3['UnemploymentRate'] = (terr3['UnemploymentRate'] * 100).round(2)
         zoom_lat = terr3['latitude'].mean()
         zoom_lon = terr3['longitude'].mean()
         zoom = 3
@@ -292,7 +293,7 @@ def update_continent_map(w_continent, select_year, w_gender):
                     colorscale='Viridis',
                     showscale=True,
                     colorbar=dict(
-                        title="Unemployment Rate",
+                        title="Unemployment Rate (%)",
                         titlefont=dict(color='#627254'),
                         titleside='right',
                         x=0.95,
@@ -306,7 +307,7 @@ def update_continent_map(w_continent, select_year, w_gender):
                 hovertext=(
                         '<b>Region</b>: ' + terr3['Continent'].astype(str) + '<br>' +
                         '<b>Country</b>: ' + terr3['Country'].astype(str) + '<br>' +
-                        '<b>Unemployment Rate</b>: ' + terr3['UnemploymentRate'].astype(str) + '<br>' +
+                        '<b>Unemployment Rate (%)</b>: ' + terr3['UnemploymentRate'].astype(str) + '<br>' +
                         '<b>Year</b>: ' + terr3['Year'].astype(str) + '<br>'
                 )
             )
@@ -326,6 +327,7 @@ def update_continent_map(w_continent, select_year, w_gender):
     }
 
 
+
 @app.callback(
     Output('bar_line_chart', 'figure'),
     [Input('w_continent', 'value'),
@@ -339,6 +341,7 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
         (unemployment_data['Sex'] == w_gender)
         ]
     grouped_data = filtered_data.groupby('Country')['UnemploymentRate'].mean().reset_index()
+    grouped_data['UnemploymentRate'] = (grouped_data['UnemploymentRate'] * 100).round(2)
 
     grouped_data['ShortCountry'] = grouped_data['Country'].apply(
         lambda x: x if len(x) <= 15 else x[:15] + '.'
@@ -383,7 +386,7 @@ def update_bar_line_chart(w_continent, select_year, w_gender):
                 tickfont=dict(size=10)
             ),
             yaxis=dict(
-                title='<b>Unemployment Rate</b>',
+                title='<b>Unemployment Rate (%)</b>',
                 color='#627254',
                 showline=True,
                 linewidth=2
