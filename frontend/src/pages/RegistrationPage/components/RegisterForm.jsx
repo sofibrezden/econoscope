@@ -6,7 +6,7 @@ import styles from "./RegisterForm.module.scss";
 import { Field, Form, Formik } from "formik";
 import SignUp from "../../../assets/sign_up.png";
 import { toast } from "react-toastify";
-
+import {API_BASE_URL} from "../../../config";
 const Register = () => {
   const navigate = useNavigate();
 
@@ -15,10 +15,10 @@ const Register = () => {
       toast.error("Fields are required ");
       return;
     }
-
+    const url = `${API_BASE_URL}/register`;
     try {
       const response = await axios.post(
-        "http://localhost:5000/register",
+        url,
         value,
         {
           headers: {

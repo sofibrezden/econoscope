@@ -1,4 +1,4 @@
-import {Field, Form, Formik} from "formik";
+import {Form, Formik} from "formik";
 import styles from "./UnemploymentRatePredictorSection.module.scss";
 import {useCallback, useEffect, useState} from "react";
 import axios from "axios";
@@ -6,12 +6,20 @@ import {toast} from "react-toastify";
 import yearly_data from "../../data/yearly_unemployment_data.csv";
 import {parse} from "papaparse";
 import React from "react";
-import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer} from "recharts";
-import {Select, Spin} from "antd";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer
+} from "recharts";
+import {Spin} from "antd";
 import 'antd/dist/reset.css';
-
-const {Option} = Select;
-
+import CustomSelect from "./CustomSelect/CustomSelect";
+import {API_BASE_URL} from "../../../config";
 const UnemploymentRatePredictorSection = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -24,6 +32,8 @@ const UnemploymentRatePredictorSection = () => {
     const [ages, setAges] = useState([]);
     const [genders, setGenders] = useState([]);
     const [result, setResult] = useState(null);
+    const [state, setState] = useState(null);
+    const [year, setYear] = useState(null);
     const [hasPrediction, setHasPrediction] = useState(false);
 
     useEffect(() => {
@@ -48,7 +58,7 @@ const UnemploymentRatePredictorSection = () => {
                     gender: item["Sex"] ? item["Sex"].trim() : "",
                     age: item["Age"] ? item["Age"].trim() : "",
                     UnemploymentRate: item["Unemployment Rate (%)"]
-                        ? parseFloat(item["Unemployment Rate (%)"])
+                        ? parseFloat(item["Unemployment Rate (%)"]) * 100
                         : 0,
                 }));
                 setData(parsedData);
@@ -57,7 +67,6 @@ const UnemploymentRatePredictorSection = () => {
         });
     };
 
-
     const extractCountries = (parsedData) => {
         const uniqueCountries = [...new Set(parsedData.map((item) => item.country))];
         setCountries(uniqueCountries);
@@ -65,8 +74,13 @@ const UnemploymentRatePredictorSection = () => {
 
     useEffect(() => {
         axios
-            .get("http://localhost:5000/form-data")
+            .get(`${API_BASE_URL}/form-data`, {
+                headers: {
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            })
             .then((response) => {
+                console.log("Response from API:", response);  // Логування відповіді
                 setCountries(response.data.countries);
                 setAges(response.data.ages);
                 setGenders(response.data.sexes);
@@ -76,17 +90,23 @@ const UnemploymentRatePredictorSection = () => {
             });
     }, []);
 
+
     const handlePrediction = useCallback(async (values) => {
         try {
-            const response = await axios.post("http://localhost:5000/prepare-predict", values);
+            const response = await axios.post(`${API_BASE_URL}/prepare-predict`, values);
+            console.log(response)
             const predictionValue = response.data.prediction * 100;
+            const predictionState = response.data.state;
+            const predictionYear = response.data.year;
             setResult(predictionValue.toFixed(2));
+            setState(predictionState);
+            setYear(predictionYear);
             handleSavePrediction(response.data);
             setFilters({
                 country: values.country,
                 gender: values.sex,
                 age: values.age,
-                year: values.year, // Додаємо рік у фільтри
+                year: values.year,
             });
             setHasPrediction(true);
         } catch (error) {
@@ -101,16 +121,16 @@ const UnemploymentRatePredictorSection = () => {
             return;
         }
 
-
         axios
             .post(
-                "http://localhost:5000/save-prediction",
+                `${API_BASE_URL}/save-prediction`,
                 {
                     prediction: predictionData.prediction,
                     country: predictionData.country,
                     age: predictionData.age,
                     sex: predictionData.sex,
                     year: predictionData.year,
+                    state: predictionData.state,
                 },
                 {
                     headers: {
@@ -139,7 +159,6 @@ const UnemploymentRatePredictorSection = () => {
         return filteredData;
     };
 
-
     const filteredData = filterData();
 
     const startYear = 2014;
@@ -153,15 +172,12 @@ const UnemploymentRatePredictorSection = () => {
         };
     });
 
-    console.log(filteredData);
-
     const chartTitle = hasPrediction
-        ? `Unemployment rate in ${filters.country !== "All" ? filters.country : "All Countries"} 
-           for ${filters.age !== "All" ? filters.age : "All Ages"} 
-           and ${filters.gender !== "All" ? filters.gender : "All Genders"} 
-           from 2014 to 2024`
+        ? `Unemployment rate: ${filters.country !== "All" ? filters.country : "All Countries"} 
+           , ${filters.age !== "All" ? filters.age : "All Ages"} 
+            , ${filters.gender !== "All" ? filters.gender : "All Genders"} 
+           , from 2014 to ${filters.year !== "All" ? filters.year : "All years"} years `
         : "";
-
 
     return (
         <div className={styles.container}>
@@ -170,67 +186,50 @@ const UnemploymentRatePredictorSection = () => {
                 <div className={styles.formContainer}>
                     <h3 className={styles.formTitle}>Forecasting Prediction Form</h3>
                     <Formik initialValues={{age: "", sex: "", country: "", year: ""}} onSubmit={handlePrediction}>
-                        <Form className={styles.inputContainer}>
-                            <div>
-                                <Field as="select" name="age">
-                                    <option disabled value="">
-                                        Select Age
-                                    </option>
-                                    {ages.map((item) => (
-                                        <option value={item} key={item}>
-                                            {item}
-                                        </option>
-                                    ))}
-                                </Field>
-                            </div>
-
-                            <div>
-                                <Field as="select" name="sex">
-                                    <option disabled value="">
-                                        Select Gender
-                                    </option>
-                                    {genders.map((item) => (
-                                        <option value={item} key={item}>
-                                            {item}
-                                        </option>
-                                    ))}
-                                </Field>
-                            </div>
-
-
-                            <div>
-                                <Field as="select" name="country">
-                                    <option disabled value="">
-                                        Select Country
-                                    </option>
-                                    {countries.map((item) => (
-                                        <option value={item} key={item}>
-                                            {item}
-                                        </option>
-                                    ))}
-                                </Field>
-                            </div>
-
-                            <div>
-                                <Field as="select" name="year">
-                                    <option disabled value="">
-                                        Select Year
-                                    </option>
-                                    {Array(4)
-                                        .fill(0)
-                                        .map((_, index) => new Date().getFullYear() + index)
-                                        .map((item) => (
-                                            <option value={item} key={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                </Field>
-                            </div>
-                            <button type="submit">Predict</button>
-                        </Form>
+                        {({values, setFieldValue}) => (
+                            <Form className={styles.inputContainer}>
+                                <div>
+                                    <CustomSelect
+                                        placeholder="Select Age"
+                                        options={ages.map(age => ({value: age, label: age.toString()}))}
+                                        value={values.age ? {value: values.age, label: values.age.toString()} : null}
+                                        onChange={(value) => setFieldValue("age", value.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <CustomSelect
+                                        placeholder="Select Gender"
+                                        options={genders.map(gender => ({value: gender, label: gender}))}
+                                        value={values.sex ? {value: values.sex, label: values.sex} : null}
+                                        onChange={(value) => setFieldValue("sex", value.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <CustomSelect
+                                        placeholder="Select Country"
+                                        options={countries.map(country => ({value: country, label: country}))}
+                                        value={values.country ? {value: values.country, label: values.country} : null}
+                                        onChange={(value) => setFieldValue("country", value.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <CustomSelect
+                                        placeholder="Select Year"
+                                        options={Array.from({length: 4}, (_, i) => new Date().getFullYear() + i).map(year => ({
+                                            value: year,
+                                            label: year.toString()
+                                        }))}
+                                        value={values.year ? {value: values.year, label: values.year.toString()} : null}
+                                        onChange={(value) => setFieldValue("year", value.value)}
+                                    />
+                                </div>
+                                <button type="submit" className={styles.submitButton}>
+                                    Predict
+                                </button>
+                            </Form>
+                        )}
                     </Formik>
                 </div>
-
                 {loading ? (
                     <Spin size="large"/>
                 ) : (
@@ -252,13 +251,21 @@ const UnemploymentRatePredictorSection = () => {
                                 className={styles.customChart}
                             >
                                 <CartesianGrid className={styles.customGrid}/>
-                                <XAxis dataKey="year" className={styles.customAxis}/>
-                                <YAxis domain={[0, 0.9]} className={styles.customAxis}/>
+                                <XAxis dataKey="year" className={styles.customAxis}
+                                       label={{value: 'Year', position: 'middle', dy: 20}}/>
+
+                                <YAxis domain={[0, 100]} className={styles.customAxis} label={{
+                                    value: 'Unemployment Rate (%)',
+                                    angle: -90,
+                                    position: 'middle',
+                                    dx: -20
+                                }}/>
+
                                 <Tooltip
                                     content={({active, payload}) => {
                                         if (active && payload && payload.length) {
                                             const year = payload[0].payload.year;
-                                            const rate = payload[0].value.toFixed(2);
+                                            const rate = payload[0].value ? payload[0].value.toFixed(2) : 'N/A';
                                             const isPredicted = year >= "2024";
                                             return (
                                                 <div className={styles.customTooltip}>
@@ -289,7 +296,7 @@ const UnemploymentRatePredictorSection = () => {
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'center',
-                                            marginTop: '10px',
+                                            marginTop: '30px',
                                             fontSize: '12px'
                                         }}>
                                             <div style={{display: 'flex', alignItems: 'center', marginRight: '20px'}}>
@@ -349,25 +356,39 @@ const UnemploymentRatePredictorSection = () => {
                         </ResponsiveContainer>
 
 
-                        {
-                            result !== null && (
+                        {result !== null && (
+                            <>
                                 <p style={{
                                     color: '#627254',
                                     fontWeight: 'bold',
-                                    marginTop: '20px',
+                                    marginTop: '10px',
                                     fontSize: '18px'
                                 }}>
                                     <b>Result:</b> {result} %
                                 </p>
-                            )
-                        }
-                    </div>
-                )
-                }
-            </div>
+                            </>
+                        )}
+                        {state !== null && year !== null && (
+                            <>
+                                <p style={{
+                                    color: '#627254',
+                                    marginTop: '1px',
+                                    fontSize: '17px'
+                                }}>
+                                    Compared to the year 2023, a <u>{state.toString().toLowerCase()} </u>
+                                    in the unemployment rate is expected in {year}.
+                                </p>
+                            </>
 
+                        )}
+
+
+                    </div>
+                )}
+            </div>
         </div>
-    );
+    )
+        ;
 };
 
 export default UnemploymentRatePredictorSection;
