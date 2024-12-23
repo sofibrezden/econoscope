@@ -1,10 +1,10 @@
 import React from "react";
 import "./Login.css";
-import Header from "./components/Header/Header";
+import Header from "../HomePage/components/Header/Header";
 import styles from "./Login.module.scss";
 import {Field, Form, Formik} from "formik";
 import LogIn from "../../assets/login.png";
-import { API_BASE_URL } from "../../config"; // Import the config
+import { API_BASE_URL } from "../../config";
 
 function Login() {
     const handleSubmit = async (value) => {
