@@ -18,6 +18,7 @@ def init_db():
                         sex TEXT,
                         year INTEGER,
                         prediction REAL,
+                        state TEXT,
                         FOREIGN KEY (user_id) REFERENCES users (id)
                       )''')
     conn.commit()
@@ -49,19 +50,27 @@ def check_user_credentials(username, password):
         return check_password_hash(result[0], password)
     return False
 
-def save_prediction(user_id, country, age, sex, year, prediction):
+def save_prediction(user_id, country, age, sex, year, prediction, state):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO predictions (user_id, country, age, sex, year, prediction)
-                      VALUES (?, ?, ?, ?, ?, ?)''',
-                   (user_id, country, age, sex, year, prediction))
+    cursor.execute('''SELECT id FROM predictions WHERE user_id = ? AND country = ? AND year = ?''',
+                   (user_id, country, year))
+    existing_prediction = cursor.fetchone()
+    if existing_prediction:
+        print("Prediction already exists.")
+        conn.close()
+        return
+    cursor.execute('''INSERT INTO predictions (user_id, country, age, sex, year, prediction, state)
+                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                   (user_id, country, age, sex, year, prediction, state))
     conn.commit()
     conn.close()
+
 
 def get_user_predictions(user_id):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute('''SELECT id, country, age, sex, year, prediction
+    cursor.execute('''SELECT id, country, age, sex, year, prediction,state
                       FROM predictions WHERE user_id = ?''', (user_id,))
     history = cursor.fetchall()
     conn.close()
