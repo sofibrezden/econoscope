@@ -1,0 +1,70 @@
+.customSelect {
+  position: relative;
+  width: 100%;
+  font-family: Arial, sans-serif;
+
+  .selectHeader {
+    border: 2px solid #66785F;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 16px;
+    color: #66785F;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+
+    &.placeholderActive {
+      color: #66785F;
+    }
+  }
+
+  .placeholder {
+    color: #45503b;
+  }
+
+  .arrow {
+    font-size: 14px;
+    margin-left: 10px;
+  }
+
+  .optionsList {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 2px solid #66785F;
+    border-radius: 0 0 4px 4px;
+    background-color: #fff;
+    z-index: 1000;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .option {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      color: #66785F;
+
+      &:hover {
+        background-color: #EEEEEE;
+        color: #91AC8F;
+      }
+    }
+  }
+
+  .lessAccurate {
+    color: red;
+    font-weight: bold;
+    font-size: 12px;
+    font-style: italic;
+    position: absolute;
+    right: 0; /* Розміщує елемент в правому краї */
+    transform: translateY(-50%); /* Центрує по вертикалі */
+  }
+
+}
