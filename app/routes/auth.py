@@ -1,8 +1,8 @@
 import sqlite3
 
-from flask import Blueprint, render_template, redirect, url_for, jsonify, session, request
+from flask import Blueprint, jsonify, request
 from .history import get_db_connection
-from ..models import save_user, init_db
+from ..models import init_db
 from flask_cors import CORS
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
