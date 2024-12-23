@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from "react";
 import styles from "../../../UserHistoryPage/components/ForecastSection/ForecastSection.module.scss";
 import {API_BASE_URL} from "../../../../config";
+
 function ForecastSection() {
     const [history, setHistory] = useState([]);
     const [error, setError] = useState(null);
@@ -14,7 +15,7 @@ function ForecastSection() {
 
             const response = await fetch(`${API_BASE_URL}/api/user-history`, {
                 method: "GET",
-                headers: {'ngrok-skip-browser-warning': 'true',Authorization: `Bearer ${token}`},
+                headers: {'ngrok-skip-browser-warning': 'true', Authorization: `Bearer ${token}`},
             });
 
             if (!response.ok) throw new Error("Failed to fetch user history.");
@@ -57,6 +58,7 @@ function ForecastSection() {
     const indexOfLastNote = currentPage * notesPerPage;
     const indexOfFirstNote = indexOfLastNote - notesPerPage;
     const currentNotes = history.slice(indexOfFirstNote, indexOfLastNote);
+    const [showTooltip, setShowTooltip] = useState(false);
 
     const totalPages = Math.ceil(history.length / notesPerPage);
     const nextPage = () => {
@@ -82,67 +84,83 @@ function ForecastSection() {
                     <th>Sex</th>
                     <th>Year</th>
                     <th>Result</th>
-                    <th>Status</th>
-                    {/*<th>Status (comp. to 2023)</th>*/}
-                    <th>Action</th>
-                </tr>
-                </thead>
-                {currentNotes.map((item) => (
-                    <tr key={item.id}>
-                        <td className={styles.firstColumn}>{item.country}</td>
-                        <td>{item.age}</td>
-                        <td>{item.sex}</td>
-                        <td>{item.year}</td>
-                        <td>{(Number(item.prediction) * 100).toFixed(2)}%</td>
-                        <td className={(() => {
-                            switch (item.state) {
-                                case "Decline":
-                                    return styles.decrease;
-                                case "Growth":
-                                    return styles.increase;
-                                default:
-                                    return "";
-                            }
-                        })()}>
-                            {item.state}
-                        </td>
 
-
-                        <button
-                            className={styles.bin}
-                            onClick={() => deletePrediction(item.id)}
+                    <th
+                        className={styles.statusColumn}
+                        onMouseEnter={() => setShowTooltip(true)}
+                        onMouseLeave={() => setShowTooltip(false)}
                         >
-                            🗑
-                        </button>
-                    </tr>
-                ))}
-            </table>
+                        Status*
+                        {showTooltip &&
+                            <div className={styles.tooltip}>Compared to 2023</div>}
+                </th>
+                <th>Action</th>
+                </tr>
+            </thead>
+            {currentNotes.map((item) => (
+                <tr key={item.id}>
+                    <td className={styles.firstColumn}>{item.country}</td>
+                    <td>{item.age}</td>
+                    <td>{item.sex}</td>
+                    <td>{item.year}</td>
+                    <td>{(Number(item.prediction) * 100).toFixed(2)}%</td>
+                    <td className={(() => {
+                        switch (item.state) {
+                            case "Decline":
+                                return styles.decrease;
+                            case "Growth":
+                                return styles.increase;
+                            default:
+                                return "";
+                        }
+                    })()}>
+                        {item.state}
+                    </td>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className={styles.pagination}>
-                    <button onClick={prevPage} disabled={currentPage === 1} className={styles.pageButton}>
-                        Prev
+
+                    <button
+                        className={styles.bin}
+                        onClick={() => deletePrediction(item.id)}
+                    >
+                        🗑
                     </button>
-                    <span className={styles.pageNumber}>
+                </tr>
+            ))}
+        </table>
+
+    {/* Pagination */
+    }
+    {
+        totalPages > 1 && (
+            <div className={styles.pagination}>
+                <button onClick={prevPage} disabled={currentPage === 1} className={styles.pageButton}>
+                    Prev
+                </button>
+                <span className={styles.pageNumber}>
                         Page {currentPage} of {totalPages}
                     </span>
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className={styles.pageButton}
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
+                <button
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    className={styles.pageButton}
+                >
+                    Next
+                </button>
+            </div>
+        )
+    }
 
-            {history.length === 0 && !error && (
-                <p className={styles.noHistoryMessage}>No history available</p>
-            )}
-            {error && <p className={styles.errorMessage}>{error}</p>}
-        </div>
-    );
+    {
+        history.length === 0 && !error && (
+            <p className={styles.noHistoryMessage}>No history available</p>
+        )
+    }
+    {
+        error && <p className={styles.errorMessage}>{error}</p>
+    }
+</div>
+)
+    ;
 }
 
 export default ForecastSection;
