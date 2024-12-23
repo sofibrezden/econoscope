@@ -5,10 +5,9 @@ from jwt import ExpiredSignatureError, InvalidTokenError, decode
 from ..models import save_prediction, delete_prediction
 
 bp = Blueprint('prediction', __name__)
-CORS(bp, supports_credentials=True, origins="http://localhost:3000")
+CORS(bp, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 SECRET_KEY = "your_secret_key"
-
 
 df = pd.read_csv('yearly_unemployment_data.csv',
                  names=["Year", "Country", "Age", "Sex", "Forecast"], header=0)
@@ -47,13 +46,29 @@ def prepare_predict():
             return jsonify({"error": "No data available for the selected criteria"}), 404
 
         avg_forecast = filtered_df['Forecast'].mean()
-
+        forecast_2023 = df[(df['Country'] == selected_country) &
+                           (df['Age'] == selected_age) &
+                           (df['Sex'] == selected_sex) &
+                           (df['Year'] == 2023)]['Forecast']
+        print(forecast_2023)
+        if not forecast_2023.empty:
+            forecast_2023 = forecast_2023.iloc[0]
+            if avg_forecast > forecast_2023:
+                state = "Growth"
+            elif avg_forecast < forecast_2023:
+                state = "Decline"
+            else:
+                state = "Stability"
+        else:
+            state = "немає даних за 2023"
+        print(state)
         return jsonify({
             "prediction": avg_forecast,
             "country": selected_country,
             "age": selected_age,
             "sex": selected_sex,
-            "year": selected_year
+            "year": selected_year,
+            "state": state,
         })
     else:
         print("Invalid input format")
@@ -74,13 +89,15 @@ def save_prediction_endpoint():
         selected_age = data.get('age')
         selected_sex = data.get('sex')
         selected_year = data.get('year')
+        state = data.get('state')
 
         if not all([prediction, selected_country, selected_age, selected_sex, selected_year]):
             return jsonify({"error": "Missing required fields"}), 400
 
         save_prediction(user_id, selected_country, selected_age, selected_sex, selected_year,
-                        prediction)
-        return jsonify({"message": "Prediction saved successfully"}), 200
+                        prediction, state)
+
+        return jsonify({"message": "Prediction saved successfully", "state": state}), 200
     else:
         return jsonify({"error": "Invalid input format, JSON expected"}), 400
 
