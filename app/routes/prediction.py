@@ -59,8 +59,6 @@ def prepare_predict():
                 state = "Decline"
             else:
                 state = "Stability"
-        else:
-            state = "немає даних за 2023"
         print(state)
         return jsonify({
             "prediction": avg_forecast,
