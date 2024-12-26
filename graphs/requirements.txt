@@ -1,0 +1,8 @@
+dash==2.16.0
+plotly==5.15.0
+pandas==2.1.2
+pyjwt==2.8.0
+flask==2.3.3
+flask-sqlalchemy==3.1.1
+flask-cors==3.0.10
+psycopg2-binary==2.9.10
