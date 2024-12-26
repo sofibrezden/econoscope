@@ -3,13 +3,15 @@ from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 from jwt import ExpiredSignatureError, InvalidTokenError, decode
 from ..models import save_prediction, delete_prediction
+import os
 
 bp = Blueprint('prediction', __name__)
 CORS(bp, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 SECRET_KEY = "your_secret_key"
 
-df = pd.read_csv('yearly_unemployment_data.csv',
+file_path = os.path.join(os.path.dirname(__file__), 'yearly_unemployment_data.csv')
+df = pd.read_csv(file_path,
                  names=["Year", "Country", "Age", "Sex", "Forecast"], header=0)
 
 
