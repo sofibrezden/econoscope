@@ -1,85 +1,80 @@
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
+import logging
 
-def init_db():
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        email TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL
-                      )''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS predictions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        country TEXT,
-                        age TEXT,
-                        sex TEXT,
-                        year INTEGER,
-                        prediction REAL,
-                        state TEXT,
-                        FOREIGN KEY (user_id) REFERENCES users (id)
-                      )''')
-    conn.commit()
-    conn.close()
+db = SQLAlchemy()
+logging.basicConfig(level=logging.DEBUG)
 
-def get_user_id(username):
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-    user_id = cursor.fetchone()
-    conn.close()
-    return user_id[0] if user_id else None
 
-def save_user(username, email, password):
-    hashed_password = generate_password_hash(password)
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_password))
-    conn.commit()
-    conn.close()
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.Text)
 
-def check_user_credentials(username, password):
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-        return check_password_hash(result[0], password)
-    return False
+    @staticmethod
+    def get_user_by_email(email):
+        return User.query.filter_by(email=email).first()
+
+    @staticmethod
+    def get_user_by_username(username):
+        return User.query.filter_by(username=username).first()
+
+    @staticmethod
+    def save_user(user):
+        try:
+            db.session.add(user)
+            db.session.commit()
+            logging.debug(f"User {user.username} added successfully.")
+        except Exception as e:
+            logging.error(f"Error adding user {user.username}: {e}")
+            db.session.rollback()
+
+
+class Prediction(db.Model):
+    __tablename__ = 'predictions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    country = db.Column(db.String(80))
+    age = db.Column(db.String(50))
+    sex = db.Column(db.String(50))
+    year = db.Column(db.Integer)
+    prediction = db.Column(db.Float)
+    state = db.Column(db.String(50))
+
+
+def init_db(app):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+
 
 def save_prediction(user_id, country, age, sex, year, prediction, state):
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''SELECT id FROM predictions WHERE user_id = ? AND country = ? AND year = ?''',
-                   (user_id, country, year))
-    existing_prediction = cursor.fetchone()
-    if existing_prediction:
-        print("Prediction already exists.")
-        conn.close()
-        return
-    cursor.execute('''INSERT INTO predictions (user_id, country, age, sex, year, prediction, state)
-                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                   (user_id, country, age, sex, year, prediction, state))
-    conn.commit()
-    conn.close()
+    prediction = Prediction(user_id=user_id, country=country, age=age, sex=sex,
+                            year=year, prediction=prediction, state=state)
+    db.session.add(prediction)
+    db.session.commit()
 
 
 def get_user_predictions(user_id):
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''SELECT id, country, age, sex, year, prediction,state
-                      FROM predictions WHERE user_id = ?''', (user_id,))
-    history = cursor.fetchall()
-    conn.close()
-    return history
+    predictions = Prediction.query.filter_by(user_id=user_id).all()
+    print(predictions)
+    return [
+        {
+            "id": prediction.id,
+            "country": prediction.country,
+            "age": prediction.age,
+            "sex": prediction.sex,
+            "year": prediction.year,
+            "prediction": prediction.prediction,
+            "state": prediction.state,
+        }
+        for prediction in predictions
+    ]
 
 
 def delete_prediction(prediction_id):
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM predictions WHERE id = ?", (prediction_id,))
-    conn.commit()
-    conn.close()
+    prediction = Prediction.query.get(prediction_id)
+    if prediction:
+        db.session.delete(prediction)
+        db.session.commit()
