@@ -12,7 +12,7 @@ from flask import jsonify
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.models import get_user_predictions, db, User
+from app.models import get_user_predictions
 from app import create_app
 
 flask_app = create_app()
