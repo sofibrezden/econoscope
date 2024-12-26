@@ -1,104 +1,84 @@
-import sqlite3
+import os
+import sys
+from contextlib import contextmanager
+from urllib.parse import urlparse, parse_qs
+
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import jwt
-from urllib.parse import urlparse, parse_qs
+from jwt import decode, ExpiredSignatureError, InvalidTokenError
 import flask
-from flask import jsonify
-from contextlib import contextmanager
+from flask import jsonify, request
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.models import get_user_predictions, db, User
+
+PORT = int(os.getenv("PORT", 8050))
 
 unemployment_data = pd.read_csv('data/df_long_with_coordinates.csv')
-df = pd.read_csv('../yearly_unemployment_data.csv')
+df = pd.read_csv('data/unemployment_data.csv')
+
 location1 = unemployment_data[['Country', 'latitude', 'longitude']]
 list_locations = location1.set_index('Country')[['latitude', 'longitude']].T.to_dict('dict')
-
 region = unemployment_data['Continent'].unique()
 continent = unemployment_data['Continent'].unique()
 sex_categories = ['Total', 'Male', 'Female']
 
+SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
-SECRET_KEY = "your_secret_key"
+
+def get_user_id_from_token():
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        return None
+    try:
+        payload = decode(token.split(" ")[1], SECRET_KEY, algorithms=["HS256"])
+        return payload.get("user_id")
+    except (ExpiredSignatureError, InvalidTokenError):
+        return None
 
 
 def check_user_registration():
-    if flask.has_request_context():
-        parsed_url = urlparse(flask.request.url)
-        query_params = parse_qs(parsed_url.query)
-        if 'token' not in query_params and 'Referer' in flask.request.headers:
-            referer_url = flask.request.headers.get('Referer')
-            parsed_url = urlparse(referer_url)
-            query_params = parse_qs(parsed_url.query)
-
-        if 'token' in query_params:
-            token = query_params['token'][0]
-            try:
-                decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-                if 'user_id' in decoded_token:
-                    return True, decoded_token['user_id']
-                else:
-                    print("Token decoded but 'user_id' not found in payload.")
-            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-                print(f"JWT decoding failed: {e}")
-                return False, None
-    return False, None
-
-
-@contextmanager
-def get_db_connection():
-    conn = sqlite3.connect('../users.db')
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        print("Database connected")
-        yield conn
-    finally:
-        conn.close()
+    user_id = get_user_id_from_token()
+    if user_id:
+        return True, user_id
+    else:
+        return False, None
 
 
 def get_user_history(user_id):
-    with get_db_connection() as conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT country, age, sex, year, prediction 
-                FROM predictions 
-                WHERE user_id = ?
-            ''', (user_id,))
-            history = cursor.fetchall()
-            print(f"Fetched {len(history)} predictions for user ID {user_id}.")
-        except sqlite3.Error as e:
-            print(f"Error fetching predictions: {e}")
-            return []
-
-    history_list = [
-        {
-            "country": row["country"],
-            "age": row["age"],
-            "sex": row["sex"],
-            "year": row["year"],
-            "prediction": row["prediction"]
-        }
-        for row in history
-    ]
-
-    year_distribution = pd.DataFrame(history_list)['year'].value_counts().to_dict()
-    print(f"Year distribution: {year_distribution}")
-
-    return history_list
+    try:
+        return get_user_predictions(user_id)
+    except Exception as e:
+        print(f"Error retrieving user history: {e}")
+        return []
 
 
 @server.route('/user/history', methods=['GET'])
 def user_history_route():
-    is_authenticated, user_id = check_user_registration()
-    if not is_authenticated:
+    user_id = get_user_id_from_token()
+    if user_id is None:
         return jsonify({"error": "User not authenticated"}), 401
+
     history = get_user_history(user_id)
-    return jsonify(history)
+    response = [
+        {
+            "id": prediction["id"],
+            "country": prediction["country"],
+            "age": prediction["age"],
+            "sex": prediction["sex"],
+            "year": prediction["year"],
+            "prediction": prediction["prediction"],
+            "state": prediction["state"],
+        }
+        for prediction in history
+    ]
+    return jsonify(response), 200
 
 
 def serve_layout():
@@ -269,7 +249,7 @@ def update_continent_map(w_continent, select_year, w_gender):
         (unemployment_data['Continent'] == w_continent) &
         (unemployment_data['Year'] == select_year) &
         (unemployment_data['Sex'] == w_gender)
-    ]
+        ]
 
     if not terr3.empty:
         terr3['UnemploymentRate'] = (terr3['UnemploymentRate'] * 100).round(2)
@@ -325,7 +305,6 @@ def update_continent_map(w_continent, select_year, w_gender):
             autosize=True,
         )
     }
-
 
 
 @app.callback(
@@ -608,4 +587,4 @@ def update_unemployment_rate_graph(w_prediction):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', port=PORT, debug=True,dev_tools_ui=False)
