@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify
 import pandas as pd
 from flask_cors import CORS
+import os
 
 bp = Blueprint('main', __name__)
 CORS(bp, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-df = pd.read_csv('yearly_unemployment_data.csv',
+file_path = os.path.join(os.path.dirname(__file__), 'yearly_unemployment_data.csv')
+df = pd.read_csv(file_path,
                  names=["Year", "Country", "Age", "Sex", "Forecast"], header=0)
 
 
