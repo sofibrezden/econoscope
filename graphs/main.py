@@ -1,26 +1,25 @@
-import os
 import sys
-from contextlib import contextmanager
-from urllib.parse import urlparse, parse_qs
-
+import os
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-from jwt import decode, ExpiredSignatureError, InvalidTokenError
+import jwt
+from urllib.parse import urlparse, parse_qs
 import flask
-from flask import jsonify, request
+from flask import jsonify
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.models import get_user_predictions, db, User
+from app import create_app
 
+flask_app = create_app()
 PORT = int(os.getenv("PORT", 8050))
 
 unemployment_data = pd.read_csv('data/df_long_with_coordinates.csv')
 df = pd.read_csv('data/unemployment_data.csv')
-
 location1 = unemployment_data[['Country', 'latitude', 'longitude']]
 list_locations = location1.set_index('Country')[['latitude', 'longitude']].T.to_dict('dict')
 region = unemployment_data['Continent'].unique()
@@ -28,26 +27,33 @@ continent = unemployment_data['Continent'].unique()
 sex_categories = ['Total', 'Male', 'Female']
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app = dash.Dash(__name__, server=flask_app, suppress_callback_exceptions=True)
+
 server = app.server
 
 
-def get_user_id_from_token():
-    token = request.headers.get("Authorization")
-    if not token or not token.startswith("Bearer "):
-        return None
-    try:
-        payload = decode(token.split(" ")[1], SECRET_KEY, algorithms=["HS256"])
-        return payload.get("user_id")
-    except (ExpiredSignatureError, InvalidTokenError):
-        return None
-
-
 def check_user_registration():
-    user_id = get_user_id_from_token()
-    if user_id:
-        return True, user_id
-    else:
+    if not flask.has_request_context():
+        return False, None
+
+    parsed_current = urlparse(flask.request.url)
+    query_current = parse_qs(parsed_current.query)
+    token = query_current.get('token', [None])[0]
+
+    if not token and 'Referer' in flask.request.headers:
+        referer_url = flask.request.headers.get('Referer')
+        parsed_referer = urlparse(referer_url)
+        query_referer = parse_qs(parsed_referer.query)
+        token = query_referer.get('token', [None])[0]
+
+    if not token:
+        return False, None
+
+    try:
+        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = decoded_token.get('user_id')
+        return (True, user_id) if user_id else (False, None)
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         return False, None
 
 
@@ -61,24 +67,11 @@ def get_user_history(user_id):
 
 @server.route('/user/history', methods=['GET'])
 def user_history_route():
-    user_id = get_user_id_from_token()
-    if user_id is None:
+    is_authenticated, user_id = check_user_registration()
+    if not is_authenticated:
         return jsonify({"error": "User not authenticated"}), 401
-
     history = get_user_history(user_id)
-    response = [
-        {
-            "id": prediction["id"],
-            "country": prediction["country"],
-            "age": prediction["age"],
-            "sex": prediction["sex"],
-            "year": prediction["year"],
-            "prediction": prediction["prediction"],
-            "state": prediction["state"],
-        }
-        for prediction in history
-    ]
-    return jsonify(response), 200
+    return jsonify(history)
 
 
 def serve_layout():
@@ -587,4 +580,4 @@ def update_unemployment_rate_graph(w_prediction):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=PORT, debug=True,dev_tools_ui=False)
+    app.run_server(host='0.0.0.0', port=PORT, debug=True, dev_tools_ui=False)
