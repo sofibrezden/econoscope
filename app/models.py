@@ -20,6 +20,10 @@ class User(db.Model):
     def get_user_by_username(username):
         return User.query.filter_by(username=username).first()
 
+    @classmethod
+    def get_user_by_id(cls, user_id):
+        return cls.query.get(user_id)
+
     @staticmethod
     def save_user(user):
         try:
