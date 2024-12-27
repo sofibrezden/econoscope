@@ -3,12 +3,12 @@ import {Link, useNavigate} from "react-router-dom";
 import styles from "./Header.module.scss";
 import EconoscopeLogo from "../../../../assets/econoscope_logo.png";
 import EconoscopeTitle from "../../../../assets/econoscope_title.png";
+import {API_BASE_URL} from "../../../../config";
 
 function Header() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
 
-    // Check if the user is authenticated via JWT
     useEffect(() => {
         const checkAuthStatus = async () => {
             try {
@@ -18,7 +18,7 @@ function Header() {
                     return;
                 }
 
-                const response = await fetch("http://127.0.0.1:5000/check-auth", {
+                const response = await fetch(`${API_BASE_URL}/check-auth`, {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -42,13 +42,13 @@ function Header() {
     // Logout handler
     const handleLogout = async () => {
         try {
-            const token = localStorage.getItem("authToken"); // Get token from localStorage
+            const token = localStorage.getItem("authToken");
             if (!token) {
                 console.error("No token found for logout");
                 return;
             }
 
-            const response = await fetch("http://127.0.0.1:5000/logout", {
+            const response = await fetch(`${API_BASE_URL}/logout`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
