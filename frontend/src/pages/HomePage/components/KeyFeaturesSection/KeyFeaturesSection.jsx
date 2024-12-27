@@ -4,7 +4,7 @@ import { cards } from "./constants";
 
 function HeroSection() {
   return (
-    <div>
+    <div id="keyFeature">
       <h1 className={styles.sectionTitle}>Key Features</h1>
       <div className={styles.sectionContainer}>
         <div>
