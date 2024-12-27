@@ -580,4 +580,4 @@ def update_unemployment_rate_graph(w_prediction):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=PORT, debug=True, dev_tools_ui=False)
+    app.run_server(port=PORT, debug=True, dev_tools_ui=False)
