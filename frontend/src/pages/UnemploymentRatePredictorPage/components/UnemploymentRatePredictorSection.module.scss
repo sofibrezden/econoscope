@@ -136,3 +136,59 @@
   color: #627254;
 }
 
+.textYear {
+  font-size: '21px';
+  margin: '8px 0'
+}
+
+.unemploymentRate {
+    font-size: "18px";
+    margin: "8px 0";
+}
+
+.predicted {
+  color: "red";
+  font-size: "13px";
+  margin: "8px 0";
+  font-weight: "bold";
+}
+
+.rootContainer {
+  display: "flex";
+  justify-content: "center";
+  margin-top: "30px";
+  font-size: "12px";
+}
+
+.legendContainer {
+  display: "flex";
+  align-items: "center";
+  margin-right: "20px";
+}
+
+.wrapper {
+  width: "10px";
+  height: "10px";
+  background-color: "#627254";
+  border-radius: "50%";
+  margin-right: "5px";
+}
+
+.secondWrapper {
+display: "flex";
+align-items: "center"; 
+}
+
+.thirdWrapper {
+  width: "10px";
+  height: "10px";
+  background-color: "#FF0000";
+  border-radius: "50%";
+  margin-right: "5px";
+}
+
+.secondText {
+  color: "#627254";
+  margin-top: "1px";
+  font-size: "17px";
+}
