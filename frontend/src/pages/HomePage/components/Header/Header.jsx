@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "./Header.module.scss";
 import EconoscopeLogo from "../../../../assets/econoscope_logo.png";
 import EconoscopeTitle from "../../../../assets/econoscope_title.png";
+import {API_BASE_URL} from "../../../../config";
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,7 +18,7 @@ function Header() {
           return;
         }
 
-        const response = await fetch("http://127.0.0.1:5000/check-auth", {
+        const response = await fetch(`${API_BASE_URL}/check-auth`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -46,7 +47,7 @@ function Header() {
         return;
       }
 
-      const response = await fetch("http://127.0.0.1:5000/logout", {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
