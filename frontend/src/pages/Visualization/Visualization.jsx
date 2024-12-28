@@ -1,22 +1,23 @@
 import React from "react";
 import Header from "../HomePage/components/Header/Header";
 import { API_Graphs_URL } from "../../config";
+import styles from "./Visualization.module.scss";
 
 function Visualization() {
-    return (
-        <>
-            <Header />
-            <div style={{ width: "100%", height: "calc(100vh - 80px)" }}>
-                <iframe
-                    src={`${API_Graphs_URL}/?token=${localStorage.getItem('authToken')}`}
-                    title="Dash Visualization"
-                    width="100%"
-                    height="100%"
-                    style={{ border: "none" }}
-                />
-            </div>
-        </>
-    );
+  return (
+    <>
+      <Header />
+      <div className={styles.container}>
+        <iframe
+          src={`${API_Graphs_URL}/?token=${localStorage.getItem("authToken")}`}
+          title="Dash Visualization"
+          width="100%"
+          height="100%"
+          className={styles.frame}
+        />
+      </div>
+    </>
+  );
 }
 
 export default Visualization;
