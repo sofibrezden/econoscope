@@ -16,7 +16,6 @@ from app.models import get_user_predictions
 from app import create_app
 
 flask_app = create_app()
-PORT = int(os.getenv("PORT", 8050))
 
 unemployment_data = pd.read_csv('data/df_long_with_coordinates.csv')
 df = pd.read_csv('data/unemployment_data.csv')
@@ -580,4 +579,4 @@ def update_unemployment_rate_graph(w_prediction):
 
 
 if __name__ == '__main__':
-    app.run_server(port=PORT, debug=True, dev_tools_ui=False)
+    app.run_server(debug=True,dev_tools_ui=False)
