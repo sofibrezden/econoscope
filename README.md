@@ -26,7 +26,7 @@
 
 Clone repository:
 ```bash
-git clone https://github.com/sofibrezden/cursach.git
+git clone https://github.com/sofibrezden/econoscope.git
 ```
 
 Create a Virtual Environment:
