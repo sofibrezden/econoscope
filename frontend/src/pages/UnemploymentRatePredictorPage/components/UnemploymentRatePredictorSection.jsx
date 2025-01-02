@@ -212,7 +212,7 @@ const UnemploymentRatePredictorSection = () => {
                                 <div>
                                     <CustomSelect
                                         placeholder="Select Year"
-                                        options={Array.from({length: 4}, (_, i) => new Date().getFullYear() + i).map(year => ({
+                                        options={Array.from({length: 4}, (_, i) => 2024 + i).map(year => ({
                                             value: year,
                                             label: year.toString()
                                         }))}
