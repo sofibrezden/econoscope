@@ -3,7 +3,7 @@
 
 ## 📑Table of Contents
 - 📖[Project Overview](#project-overview)
-- 🛠️[Installation](#installation)
+- 🛠[Installation](#installation)
 - 📊 [Dataset Creation](#dataset-creation)
 - 🤖[Models](#models)
 - 🚀[Usage & deployment](#usage)
@@ -22,7 +22,7 @@
 - **Comprehensive Data:** Leverages extensive datasets from global organizations for robust analysis.
 
 
-## 🛠️Installation
+## 🛠Installation
 
 Clone repository:
 ```bash
@@ -88,7 +88,7 @@ The application will be available on http://localhost:3000. Ready to use!
 # 📊Dataset Creation
 To analyze labor market trends and unemployment rates, two datasets were utilized:
 
-### 🗂️**ILOSTAT Dataset**
+### 🗂**ILOSTAT Dataset**
 Provides unemployment rates globally, categorized by gender, age groups, and years (2000-2023). Key features include:
 
 - **Value:** Unemployment rate.
@@ -97,7 +97,7 @@ Provides unemployment rates globally, categorized by gender, age groups, and yea
 - **Country:** Country name.
 - **Year:** Year of data.
 
-### 🗂️**Kaggle "Global Unemployment Data" Dataset**
+### 🗂**Kaggle "Global Unemployment Data" Dataset**
 Contains annual unemployment rates (2014-2024) for countries worldwide, categorized by demographics such as gender and age groups. Key features include:
 
 - **Country Name:** Country.
@@ -147,16 +147,17 @@ To explore the forecasts and insights, simply visit the website and interact wit
 # 📁Files
 - **app/:** Backend Flask application files.
 - **frontend/:** React-based frontend files.
+- **datasets/:** Dataset files used for analysis and forecasting.
 - **graphs/:** Visualization server files.
 - **notebooks/:** Jupyter notebooks for exploratory analysis and forecasting, including:
 
-  - creating_new_dataset&EDA.ipynb
+  - **creating_new_dataset&EDA.ipynb:** Covers dataset creation and EDA. Combines data from multiple sources (e.g., Kaggle, ILOSTAT), adds continent info, cleans data, analyzes trends, and explores correlations between unemployment, age, sex, and region.
 
-  - forecast_2025.ipynb
+  - **forecast_2025.ipynb :**  A notebook for forecasting unemployment rates for 2025. Evaluates model performance and visualizes forecasts.
 
-  - forecast_2026.ipynb
+  - **forecast_2026.ipynb :**  A notebook for forecasting unemployment rates for 2026. Evaluates model performance and visualizes forecasts.
 
-  - forecast_2027.ipynb
+  - **forecast_2027.ipynb :**  A notebook for forecasting unemployment rates for 2027. Evaluates model performance and visualizes forecasts.
 
 # 🤝 Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
