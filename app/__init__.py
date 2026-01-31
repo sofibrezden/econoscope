@@ -7,7 +7,7 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key'
     CORS(app, supports_credentials=True,resources={r"/*": {"origins": "*"}},allow_headers=["Content-Type", "Authorization"])
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://econodata_user:Sy2OmNKLBSg03p9XuM183auV9aVRqoZr@dpg-cubq975ds78s73aefcmg-a.oregon-postgres.render.com/econodata'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://users_kk95_user:Uv3sWcZcWbZbc0t52To9YRyMs3rkRuSF@dpg-d5v4i2ili9vc73a0fipg-a.oregon-postgres.render.com/users_kk95'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     init_db(app)
     app.register_blueprint(auth.bp)
